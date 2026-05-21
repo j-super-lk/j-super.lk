@@ -24,7 +24,7 @@
         <div class="max-w-7xl mx-auto w-full flex flex-wrap justify-between items-center gap-2">
             <div class="flex space-x-4 md:space-x-6 font-semibold uppercase tracking-wider overflow-x-auto hide-scroll" id="topDynamicNav">
                 <a href="#" class="hover:text-green-400 transition whitespace-nowrap">DELIVERY TYPE</a>
-                <a href="#" class="text-green-400 font-bold transition whitespace-nowrap" onclick="showAllCategories()">CATEGORIES</a>
+                <a href="#" class="text-green-400 font-bold transition whitespace-nowrap" onclick="resetFilters()">CATEGORIES</a>
                 <a href="#" class="hover:text-green-400 transition whitespace-nowrap">RE-ORDER</a>
                 <a href="#" onclick="document.getElementById('trackModal').classList.remove('hidden')" class="hover:text-green-400 transition whitespace-nowrap">Track my order</a>
             </div>
@@ -75,12 +75,8 @@
         <!-- Categories & Subcategories Row -->
         <div class="mb-10" id="catSection">
             <h2 class="text-xl font-black text-slate-800 mb-4 border-l-4 border-orange-500 pl-3">Shop by Category</h2>
-            <div class="flex overflow-x-auto gap-4 pb-2 custom-scrollbar" id="categoryRow">
-                <!-- Categories injected here -->
-            </div>
-            <div class="flex overflow-x-auto gap-2 pb-4 mt-2 hidden custom-scrollbar" id="subcategoryRow">
-                <!-- Subcategories injected here -->
-            </div>
+            <div class="flex overflow-x-auto gap-4 pb-2 custom-scrollbar" id="categoryRow"></div>
+            <div class="flex overflow-x-auto gap-2 pb-4 mt-2 hidden custom-scrollbar" id="subcategoryRow"></div>
         </div>
 
         <!-- Products Section -->
@@ -157,7 +153,7 @@
                 </div>
 
                 <input type="hidden" id="isCheckoutAction" value="false">
-                <button type="submit" class="w-full bg-green-600 text-white font-black py-3 rounded-xl hover:bg-green-700 transition shadow-lg mt-4" id="authBtnText">Place Order via WhatsApp</button>
+                <button type="submit" class="w-full bg-green-600 text-white font-black py-3 rounded-xl hover:bg-green-700 transition shadow-lg mt-4" id="authBtnText">Place Order</button>
             </form>
         </div>
     </div>
@@ -173,7 +169,7 @@
         </div>
     </div>
 
-    <!-- Generic Page Modal (For FAQ, About Us etc) -->
+    <!-- Generic Page Modal -->
     <div id="pageModal" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm">
         <div class="bg-white rounded-3xl p-6 w-full max-w-2xl shadow-2xl relative max-h-[80vh] flex flex-col">
             <button onclick="document.getElementById('pageModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 text-xl"><i class="fa-solid fa-times"></i></button>
@@ -195,14 +191,10 @@
     <footer class="bg-slate-900 text-slate-300 pt-12 pb-6 border-t-4 border-orange-500 text-sm mt-auto">
         <div class="max-w-7xl mx-auto px-4 mb-10">
             <h3 class="font-black text-white text-base uppercase tracking-widest text-center mb-6 border-b border-slate-700 pb-4"><i class="fa-solid fa-users mr-2 text-orange-500"></i> Board of Directors</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6" id="directorsGrid">
-                <!-- Directors JS -->
-            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6" id="directorsGrid"></div>
         </div>
 
-        <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8 mb-8" id="footerColumns">
-            <!-- Footer details JS -->
-        </div>
+        <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8 mb-8" id="footerColumns"></div>
         
         <div class="max-w-7xl mx-auto px-4 pt-6 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex space-x-4 text-xs font-bold uppercase" id="footerPages">
@@ -220,33 +212,57 @@
     <script>
         document.getElementById('year').innerText = new Date().getFullYear();
 
-        // Data Models
-        const defaultCats = [
-            { name: 'Vegetables', subcats: ['Leafy Greens', 'Root Vegetables'] },
-            { name: 'Fruits', subcats: [] },
-            { name: 'Meat', subcats: [] },
-            { name: 'Seafood', subcats: [] },
-            { name: 'Beverages', subcats: [] },
-            { name: 'Chilled', subcats: [] },
-            { name: 'Frozen Food', subcats: [] },
-            { name: 'Grocery', subcats: [] },
-            { name: 'Household', subcats: [] },
-            { name: 'Hampers & Vouchers', subcats: [] },
-            { name: 'Prepared Food', subcats: [] },
-            { name: 'Electronic Devices', subcats: [] }
-        ];
-
         let activeCategory = null;
         let activeSubcategory = null;
-        let cart = JSON.parse(localStorage.getItem('jsuper_cart')) || [];
-        let customer = JSON.parse(localStorage.getItem('jsuper_customer')) || null;
-        let settings = JSON.parse(localStorage.getItem('jsuper_settings')) || { 
-            navLinks: 'J SUPER PRODUCTS, EXCLUSIVES, LOYALTY, COMMUNITY, HELP',
-            waAdmin: '94706717695', address: 'MUDDUWA, RATNAPURA', phones: '0706717695', 
-            bank: '', paypal: '', crypto: '', about: '', faq: '', privacy: '', terms: '', delivery: ''
-        };
+        let cart = [];
+        let customer = null;
+        let settings = {};
 
-        // Init
+        // CORE DATA INITIALIZATION & SANITIZATION
+        function initData() {
+            // Fix duplicated IDs in old local storage which broke the cart
+            let prods = JSON.parse(localStorage.getItem('jsuper_products')) || [];
+            let uniqueProds = [];
+            let seen = new Set();
+            let changed = false;
+            
+            prods.forEach(p => {
+                let idStr = String(p.id).trim();
+                if(!idStr || idStr === 'undefined' || seen.has(idStr)) {
+                    p.id = Date.now() + Math.floor(Math.random() * 100000); // Force new unique ID
+                    changed = true;
+                }
+                seen.add(String(p.id));
+                uniqueProds.push(p);
+            });
+            if(changed) localStorage.setItem('jsuper_products', JSON.stringify(uniqueProds));
+
+            // Setup Categories
+            const defaultCats = [
+                { name: 'Vegetables', subcats: ['Leafy Greens', 'Root Vegetables'] },
+                { name: 'Fruits', subcats: [] },
+                { name: 'Meat', subcats: [] },
+                { name: 'Seafood', subcats: [] },
+                { name: 'Beverages', subcats: [] },
+                { name: 'Chilled', subcats: [] },
+                { name: 'Frozen Food', subcats: [] },
+                { name: 'Grocery', subcats: [] },
+                { name: 'Household', subcats: [] },
+                { name: 'Hampers & Vouchers', subcats: [] },
+                { name: 'Prepared Food', subcats: [] },
+                { name: 'Electronic Devices', subcats: [] }
+            ];
+            let cats = JSON.parse(localStorage.getItem('jsuper_cats'));
+            if(!cats || cats.length === 0) localStorage.setItem('jsuper_cats', JSON.stringify(defaultCats));
+
+            // Load safe variables
+            cart = JSON.parse(localStorage.getItem('jsuper_cart')) || [];
+            customer = JSON.parse(localStorage.getItem('jsuper_customer')) || null;
+            settings = JSON.parse(localStorage.getItem('jsuper_settings')) || { 
+                navLinks: 'J SUPER PRODUCTS, EXCLUSIVES', waAdmin: '94706717695', address: '', phones: '' 
+            };
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             initData();
             renderNav();
@@ -258,7 +274,6 @@
             updateCartUI();
             checkCustomerState();
             
-            // Payment proof file listener
             document.getElementById('paymentProofFile').addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if(file) {
@@ -268,21 +283,14 @@
                 }
             });
         });
-        
-        function initData() {
-            let cats = JSON.parse(localStorage.getItem('jsuper_cats'));
-            if(!cats || cats.length === 0) localStorage.setItem('jsuper_cats', JSON.stringify(defaultCats));
-        }
 
         // ================= UI RENDERING =================
         function renderNav() {
             const topNav = document.getElementById('topDynamicNav');
-            const links = settings.navLinks.split(',').map(l => l.trim()).filter(l => l);
+            const links = (settings.navLinks||'').split(',').map(l => l.trim()).filter(l => l);
             let navHtml = `<a href="#" class="hover:text-orange-400 transition whitespace-nowrap">DELIVERY TYPE</a>`;
             navHtml += `<a href="#" class="text-orange-400 font-black transition whitespace-nowrap" onclick="resetFilters()">CATEGORIES</a>`;
-            links.forEach(l => {
-                navHtml += `<a href="#" class="hover:text-green-400 transition whitespace-nowrap">${l}</a>`;
-            });
+            links.forEach(l => { navHtml += `<a href="#" class="hover:text-green-400 transition whitespace-nowrap">${l}</a>`; });
             navHtml += `<a href="#" class="hover:text-green-400 transition whitespace-nowrap">RE-ORDER</a>`;
             navHtml += `<a href="#" onclick="document.getElementById('trackModal').classList.remove('hidden')" class="hover:text-green-400 transition whitespace-nowrap">Track my order</a>`;
             topNav.innerHTML = navHtml;
@@ -302,26 +310,22 @@
         }
 
         function renderCategories() {
-            const cats = JSON.parse(localStorage.getItem('jsuper_cats')) || defaultCats;
+            const cats = JSON.parse(localStorage.getItem('jsuper_cats')) || [];
             const row = document.getElementById('categoryRow');
-            
             row.innerHTML = `<button onclick="resetFilters()" class="px-6 py-2 rounded-full font-bold whitespace-nowrap transition border-2 ${!activeCategory ? 'bg-green-600 text-white border-green-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:border-green-400'}">All Items</button>`;
             
             cats.filter(c => c.active !== false).forEach(c => {
                 let isActive = activeCategory === c.name;
                 row.innerHTML += `<button onclick="filterCategory('${c.name}')" class="px-6 py-2 rounded-full font-bold whitespace-nowrap transition border-2 ${isActive ? 'bg-green-600 text-white border-green-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:border-green-400'}">${c.name}</button>`;
             });
-            
             renderSubcategories();
         }
         
         function renderSubcategories() {
             const subRow = document.getElementById('subcategoryRow');
             if(!activeCategory) { subRow.classList.add('hidden'); return; }
-            
-            const cats = JSON.parse(localStorage.getItem('jsuper_cats')) || defaultCats;
+            const cats = JSON.parse(localStorage.getItem('jsuper_cats')) || [];
             let c = cats.find(x => x.name === activeCategory);
-            
             if(c && c.subcats && c.subcats.length > 0) {
                 subRow.innerHTML = c.subcats.map(s => {
                     let isActive = activeSubcategory === s;
@@ -336,16 +340,12 @@
         function filterCategory(name) { activeCategory = name; activeSubcategory = null; renderCategories(); renderProducts(); document.getElementById('catSection').scrollIntoView({behavior: 'smooth'}); }
         function filterSubcategory(name) { activeSubcategory = name; renderCategories(); renderProducts(); }
         function resetFilters() { activeCategory = null; activeSubcategory = null; document.getElementById('searchInput').value = ''; renderCategories(); renderProducts(); }
-        
-        function searchProducts() {
-            const q = document.getElementById('searchInput').value.toLowerCase();
-            renderProducts(q);
-        }
+        function searchProducts() { const q = document.getElementById('searchInput').value.toLowerCase(); renderProducts(q); }
 
         function renderProducts(searchQuery = null) {
             let prods = JSON.parse(localStorage.getItem('jsuper_products')) || [];
             
-            // First, separate promo items to show in promo slider
+            // PROMOS
             let promos = prods.filter(p => p.discType && p.discType !== 'none');
             const promoRow = document.getElementById('promoRow');
             const promoSec = document.getElementById('promoSection');
@@ -356,7 +356,7 @@
                 promoSec.classList.add('hidden');
             }
 
-            // Filter main grid
+            // MAIN GRID
             let filtered = prods;
             if(searchQuery) {
                 filtered = prods.filter(p => p.name.toLowerCase().includes(searchQuery) || p.category.toLowerCase().includes(searchQuery));
@@ -366,14 +366,12 @@
                 if(activeSubcategory) filtered = filtered.filter(p => p.subcategory === activeSubcategory);
                 document.getElementById('productSectionTitle').innerText = activeSubcategory ? `${activeCategory} > ${activeSubcategory}` : activeCategory;
             } else {
-                // Default view (Limit to 8)
-                filtered = prods.slice(0, 10);
+                filtered = prods.slice(0, 12);
                 document.getElementById('productSectionTitle').innerText = "Featured Products";
             }
             
             const grid = document.getElementById('productGrid');
             const noMsg = document.getElementById('noProductsMsg');
-            
             if (filtered.length === 0) {
                 grid.innerHTML = '';
                 noMsg.classList.remove('hidden');
@@ -385,11 +383,11 @@
 
         function generateProductCardHTML(p, isPromo = false) {
             const img = p.img || 'https://via.placeholder.com/300?text=No+Image';
-            const ut = p.isWeight === 'true' ? '1 kg' : '1 Unit';
-            const min = p.isWeight === 'true' ? '0.1' : '1';
-            const step = p.isWeight === 'true' ? '0.1' : '1';
+            const isW = (p.isWeight === 'true' || p.isWeight === true);
+            const ut = isW ? '1 kg' : '1 Unit';
+            const min = isW ? 0.1 : 1;
+            const step = isW ? 0.1 : 1;
             
-            // Calc Discount
             let finalPrice = parseFloat(p.price);
             let discBadge = '';
             let priceHtml = `<span class="text-green-700 font-black text-base md:text-lg">Rs. ${finalPrice.toFixed(2)}</span>`;
@@ -404,12 +402,11 @@
                 priceHtml = `<span class="text-[10px] text-slate-400 line-through mr-1 block">Rs.${parseFloat(p.price).toFixed(2)}</span><span class="text-red-600 font-black text-base md:text-lg">Rs. ${finalPrice.toFixed(2)}</span>`;
             }
 
-            p.calcPrice = finalPrice; // Temporary property for cart addition
-
+            const inputId = isPromo ? `qty_promo_${p.id}` : `qty_grid_${p.id}`;
             const cardWidth = isPromo ? 'min-w-[200px] w-[200px]' : 'w-full';
-            const inputHtml = p.isWeight === 'true' ? 
-                `<input type="number" id="qty_${p.id}" value="${min}" step="${step}" min="${min}" class="w-16 p-1.5 border rounded-lg text-xs font-black text-center focus:outline-none focus:border-green-500">` : 
-                `<div class="flex items-center bg-slate-100 rounded-lg border border-slate-200"><button onclick="document.getElementById('qty_${p.id}').value = Math.max(1, parseInt(document.getElementById('qty_${p.id}').value)-1)" class="px-2 py-1 hover:text-green-600"><i class="fa-solid fa-minus text-[10px]"></i></button><input type="number" id="qty_${p.id}" value="1" min="1" readonly class="w-8 bg-transparent text-center text-xs font-black outline-none pointer-events-none"><button onclick="document.getElementById('qty_${p.id}').value = parseInt(document.getElementById('qty_${p.id}').value)+1" class="px-2 py-1 hover:text-green-600"><i class="fa-solid fa-plus text-[10px]"></i></button></div>`;
+            const inputHtml = isW ? 
+                `<input type="number" id="${inputId}" value="${min}" step="${step}" min="${min}" class="w-16 p-1.5 border rounded-lg text-xs font-black text-center focus:outline-none focus:border-green-500">` : 
+                `<div class="flex items-center bg-slate-100 rounded-lg border border-slate-200"><button onclick="document.getElementById('${inputId}').value = Math.max(1, parseInt(document.getElementById('${inputId}').value)-1)" class="px-2 py-1 hover:text-green-600"><i class="fa-solid fa-minus text-[10px]"></i></button><input type="number" id="${inputId}" value="1" min="1" readonly class="w-8 bg-transparent text-center text-xs font-black outline-none pointer-events-none"><button onclick="document.getElementById('${inputId}').value = parseInt(document.getElementById('${inputId}').value)+1" class="px-2 py-1 hover:text-green-600"><i class="fa-solid fa-plus text-[10px]"></i></button></div>`;
 
             return `
                 <div class="${cardWidth} bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all flex flex-col group h-full flex-shrink-0 relative">
@@ -422,102 +419,133 @@
                         <h3 class="font-bold text-slate-800 text-sm leading-tight mb-1 line-clamp-2">${p.name}</h3>
                         <p class="text-[10px] text-slate-500 mb-2 line-clamp-2">${p.desc}</p>
                         <div class="mt-auto flex justify-between items-end">
-                            <div>
-                                <span class="block text-[10px] text-slate-400 font-bold mb-0.5">Per ${ut}</span>
-                                ${priceHtml}
-                            </div>
+                            <div><span class="block text-[10px] text-slate-400 font-bold mb-0.5">Per ${ut}</span>${priceHtml}</div>
                         </div>
                         <div class="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-slate-100">
                             ${inputHtml}
-                            <button onclick="addToCart(${p.id}, ${finalPrice})" class="bg-orange-500 text-white w-9 h-9 rounded-full hover:bg-orange-600 hover:scale-110 transition flex items-center justify-center shadow-md"><i class="fa-solid fa-cart-plus"></i></button>
+                            <button onclick="addToCart('${p.id}', ${finalPrice}, '${inputId}')" class="bg-orange-500 text-white w-9 h-9 rounded-full hover:bg-orange-600 hover:scale-110 transition flex items-center justify-center shadow-md"><i class="fa-solid fa-cart-plus"></i></button>
                         </div>
                     </div>
                 </div>
             `;
         }
 
-        // ================= CART & CHECKOUT =================
+        // ================= BULLETPROOF CART & CHECKOUT =================
         function toggleCart() {
             const drawer = document.getElementById('cartDrawer');
             const overlay = document.getElementById('cartOverlay');
             if(drawer.classList.contains('translate-x-full')) {
                 drawer.classList.remove('translate-x-full');
-                overlay.classList.remove('hidden');
-                overlay.classList.add('block');
+                overlay.classList.remove('hidden'); overlay.classList.add('block');
             } else {
                 drawer.classList.add('translate-x-full');
-                overlay.classList.add('hidden');
-                overlay.classList.remove('block');
+                overlay.classList.add('hidden'); overlay.classList.remove('block');
             }
         }
 
-        function addToCart(id, finalPrice) {
+        function addToCart(prodId, finalPrice, inputId) {
+            prodId = String(prodId).trim();
             let prods = JSON.parse(localStorage.getItem('jsuper_products')) || [];
-            const prod = prods.find(p => String(p.id) === String(id));
-            if(!prod) return;
+            const prod = prods.find(p => String(p.id).trim() === prodId);
             
-            let qty = parseFloat(document.getElementById(`qty_${id}`).value);
-            if(qty <= 0) return;
+            if(!prod) {
+                alert("Error: Product not found in database.");
+                return;
+            }
+            
+            let el = document.getElementById(inputId);
+            let val = el ? parseFloat(el.value) : 1;
+            if(isNaN(val) || val <= 0) val = 1;
 
-            const exist = cart.find(i => String(i.id) === String(id));
-            if(exist) { exist.qty += qty; } 
-            else { cart.push({...prod, qty: qty, calcPrice: finalPrice}); }
+            const exist = cart.find(i => String(i.id).trim() === prodId);
+            if(exist) { 
+                exist.qty += val; 
+                exist.calcPrice = finalPrice; 
+            } else { 
+                cart.push({...prod, qty: val, calcPrice: finalPrice}); 
+            }
             
             localStorage.setItem('jsuper_cart', JSON.stringify(cart));
             updateCartUI();
             
-            toggleCart(); 
-            setTimeout(toggleCart, 1500);
+            const drawer = document.getElementById('cartDrawer');
+            if(drawer.classList.contains('translate-x-full')) {
+                toggleCart(); 
+                setTimeout(toggleCart, 1500);
+            }
         }
 
-        function updateCartQty(id, change, minVal) {
-            const item = cart.find(i => String(i.id) === String(id));
+        function updateCartQty(prodId, change, minVal) {
+            prodId = String(prodId).trim();
+            const item = cart.find(i => String(i.id).trim() === prodId);
             if(item) {
-                // Fixed floating point precision issue
                 item.qty = Math.max(minVal, Math.round((item.qty + change) * 10) / 10);
-                if(item.qty <= 0) cart = cart.filter(i => String(i.id) !== String(id));
+                if(item.qty <= 0) {
+                    cart = cart.filter(i => String(i.id).trim() !== prodId);
+                }
                 localStorage.setItem('jsuper_cart', JSON.stringify(cart));
                 updateCartUI();
             }
         }
-        function removeFromCart(id) {
-            cart = cart.filter(i => String(i.id) !== String(id));
+
+        function removeFromCart(prodId) {
+            prodId = String(prodId).trim();
+            cart = cart.filter(i => String(i.id).trim() !== prodId);
             localStorage.setItem('jsuper_cart', JSON.stringify(cart));
             updateCartUI();
         }
 
         function updateCartUI() {
-            document.getElementById('cartCountBadge').innerText = cart.length;
-            const list = document.getElementById('cartItemsList');
-            let total = 0;
-            if(cart.length === 0) { list.innerHTML = '<div class="text-center text-slate-500 py-10">Cart is empty</div>'; document.getElementById('cartTotal').innerText = 'Rs. 0.00'; return; }
-            
-            list.innerHTML = cart.map(i => {
-                const itemTotal = i.qty * parseFloat(i.calcPrice);
-                total += itemTotal;
-                const unit = i.isWeight === 'true' ? 'Kg' : 'Unit';
-                const step = i.isWeight === 'true' ? 0.1 : 1;
-                return `
-                    <div class="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 mb-3 shadow-sm relative">
-                        <button onclick="removeFromCart(${i.id})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px]"><i class="fa-solid fa-times"></i></button>
-                        <img src="${i.img||'https://via.placeholder.com/50'}" class="w-12 h-12 rounded object-cover border">
-                        <div class="flex-1">
-                            <h4 class="font-bold text-xs text-slate-800 leading-tight">${i.name}</h4>
-                            <div class="text-[10px] text-slate-500">Rs.${parseFloat(i.calcPrice).toFixed(2)} / ${unit}</div>
-                            <div class="font-black text-green-700 text-sm mt-1">Rs.${itemTotal.toFixed(2)}</div>
+            try {
+                document.getElementById('cartCountBadge').innerText = cart.length;
+                const list = document.getElementById('cartItemsList');
+                let total = 0;
+                
+                if (cart.length === 0) {
+                    list.innerHTML = '<div class="text-center text-slate-500 py-10 font-bold">Cart is empty</div>';
+                    document.getElementById('cartTotal').innerText = 'Rs. 0.00';
+                    return;
+                }
+                
+                let html = '';
+                cart.forEach(i => {
+                    let pPrice = parseFloat(i.calcPrice !== undefined ? i.calcPrice : i.price) || 0;
+                    let q = parseFloat(i.qty) || 1;
+                    let itemTotal = q * pPrice;
+                    total += itemTotal;
+                    
+                    let isW = (i.isWeight === 'true' || i.isWeight === true);
+                    let unit = isW ? 'Kg' : 'Unit';
+                    let step = isW ? 0.1 : 1;
+                    let minVal = isW ? 0.1 : 1;
+                    
+                    html += `
+                        <div class="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 mb-3 shadow-sm relative group">
+                            <button onclick="removeFromCart('${i.id}')" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md hover:scale-110 transition text-[12px] z-10"><i class="fa-solid fa-times"></i></button>
+                            <img src="${i.img || 'https://via.placeholder.com/50'}" class="w-14 h-14 rounded-lg object-cover border border-slate-100">
+                            <div class="flex-1">
+                                <h4 class="font-bold text-xs text-slate-800 leading-tight mb-1 line-clamp-2">${i.name}</h4>
+                                <div class="text-[10px] text-slate-500 font-bold">Rs.${pPrice.toFixed(2)} / ${unit}</div>
+                                <div class="font-black text-green-700 text-sm mt-1">Rs.${itemTotal.toFixed(2)}</div>
+                            </div>
+                            <div class="flex flex-col items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
+                                <button onclick="updateCartQty('${i.id}', ${step}, ${minVal})" class="text-slate-600 hover:text-green-600 px-3 py-1 bg-white rounded shadow-sm mb-1"><i class="fa-solid fa-plus text-[10px]"></i></button>
+                                <span class="font-black text-xs w-8 text-center my-1">${q}</span>
+                                <button onclick="updateCartQty('${i.id}', -${step}, 0)" class="text-slate-600 hover:text-red-600 px-3 py-1 bg-white rounded shadow-sm mt-1"><i class="fa-solid fa-minus text-[10px]"></i></button>
+                            </div>
                         </div>
-                        <div class="flex flex-col items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
-                            <button onclick="updateCartQty(${i.id}, ${step}, ${step})" class="text-slate-600 hover:text-green-600 px-2 py-1"><i class="fa-solid fa-plus text-[10px]"></i></button>
-                            <span class="font-bold text-xs w-6 text-center">${i.qty}</span>
-                            <button onclick="updateCartQty(${i.id}, -${step}, 0)" class="text-slate-600 hover:text-red-600 px-2 py-1"><i class="fa-solid fa-minus text-[10px]"></i></button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            document.getElementById('cartTotal').innerText = `Rs. ${total.toFixed(2)}`;
+                    `;
+                });
+                list.innerHTML = html;
+                document.getElementById('cartTotal').innerText = `Rs. ${total.toFixed(2)}`;
+            } catch(e) {
+                console.error("Cart Rendering Error:", e);
+                cart = []; localStorage.setItem('jsuper_cart', '[]'); 
+                document.getElementById('cartItemsList').innerHTML = '<div class="text-red-500 text-xs p-4 font-bold text-center">Cart corrupted. Resetting...</div>';
+            }
         }
 
-        // ================= CUSTOMER & CHECKOUT REALISTIC FLOW =================
+        // ================= CUSTOMER & CHECKOUT =================
         function checkCustomerState() {
             const link = document.getElementById('authLink');
             if(customer) {
@@ -525,9 +553,7 @@
                 document.getElementById('custName').value = customer.name;
                 document.getElementById('custPhone').value = customer.phone;
                 document.getElementById('custAddress').value = customer.address;
-            } else {
-                link.innerHTML = `<i class="fa-solid fa-user"></i> Sign In / Account`;
-            }
+            } else { link.innerHTML = `<i class="fa-solid fa-user"></i> Sign In / Account`; }
         }
 
         function openAuthModal(isCheckout = false) {
@@ -536,36 +562,19 @@
             document.getElementById('authBtnText').innerText = isCheckout ? "Place Order" : "Save Details";
             document.getElementById('authModal').classList.add('modal-active');
             
-            if(isCheckout) {
-                document.getElementById('paymentSection').classList.remove('hidden');
-                togglePaymentProof();
-            } else {
-                document.getElementById('paymentSection').classList.add('hidden');
-                toggleCart(); // Close cart if just logging in
-            }
+            if(isCheckout) { document.getElementById('paymentSection').classList.remove('hidden'); togglePaymentProof(); } 
+            else { document.getElementById('paymentSection').classList.add('hidden'); toggleCart(); }
         }
-
-        function closeAuthModal() {
-            document.getElementById('authModal').classList.remove('modal-active');
-        }
+        function closeAuthModal() { document.getElementById('authModal').classList.remove('modal-active'); }
 
         function handleAuthSubmit(e) {
             e.preventDefault();
-            customer = {
-                name: document.getElementById('custName').value,
-                phone: document.getElementById('custPhone').value,
-                address: document.getElementById('custAddress').value
-            };
+            customer = { name: document.getElementById('custName').value, phone: document.getElementById('custPhone').value, address: document.getElementById('custAddress').value };
             localStorage.setItem('jsuper_customer', JSON.stringify(customer));
             checkCustomerState();
             
-            const isCheckout = document.getElementById('isCheckoutAction').value === 'true';
-            if(isCheckout) {
-                finalizeOrder();
-            } else {
-                alert("Account details saved successfully.");
-                closeAuthModal();
-            }
+            if(document.getElementById('isCheckoutAction').value === 'true') finalizeOrder();
+            else { alert("Details saved."); closeAuthModal(); }
         }
         
         function togglePaymentProof() {
@@ -578,25 +587,15 @@
             if(method === 'paypal') details = '<strong>PayPal:</strong><br>Send to: ' + (settings.paypal || 'Not configured.');
             if(method === 'crypto') details = '<strong>Crypto (Binance):</strong><br>' + (settings.crypto || 'Not configured.');
             
-            if(method === 'cod') {
-                detailsBox.classList.add('hidden');
-                proofBox.classList.add('hidden');
-            } else {
-                detailsBox.innerHTML = details;
-                detailsBox.classList.remove('hidden');
-                proofBox.classList.remove('hidden');
-            }
+            if(method === 'cod') { detailsBox.classList.add('hidden'); proofBox.classList.add('hidden'); } 
+            else { detailsBox.innerHTML = details; detailsBox.classList.remove('hidden'); proofBox.classList.remove('hidden'); }
         }
 
-        function proceedToCheckout() {
-            if(cart.length === 0) { alert("Cart is empty!"); return; }
-            openAuthModal(true);
-        }
+        function proceedToCheckout() { if(cart.length === 0) { alert("Cart is empty!"); return; } openAuthModal(true); }
 
         function finalizeOrder() {
             if(!customer) return;
-            
-            let total = cart.reduce((acc, i) => acc + (i.qty * parseFloat(i.calcPrice)), 0);
+            let total = cart.reduce((acc, i) => acc + (i.qty * parseFloat(i.calcPrice !== undefined ? i.calcPrice : i.price)), 0);
             const orderId = 'ORD-' + Math.floor(Math.random() * 1000000);
             
             const newOrder = {
@@ -611,38 +610,22 @@
             };
             
             const orders = JSON.parse(localStorage.getItem('jsuper_orders')) || [];
-            orders.unshift(newOrder);
-            localStorage.setItem('jsuper_orders', JSON.stringify(orders));
+            orders.unshift(newOrder); localStorage.setItem('jsuper_orders', JSON.stringify(orders));
 
-            // WhatsApp Message
-            let msg = `*NEW ORDER - ${newOrder.id}* %0A`;
-            msg += `-----------------------%0A`;
-            msg += `*Customer:* ${customer.name}%0A`;
-            msg += `*Phone:* ${customer.phone}%0A`;
-            msg += `*Address:* ${customer.address || 'Pickup'}%0A`;
-            msg += `*Payment:* ${newOrder.paymentMethod.toUpperCase()}%0A`;
-            msg += `-----------------------%0A*ITEMS:*%0A`;
-            
+            let msg = `*NEW ORDER - ${newOrder.id}* %0A-----------------------%0A*Customer:* ${customer.name}%0A*Phone:* ${customer.phone}%0A*Address:* ${customer.address || 'Pickup'}%0A*Payment:* ${newOrder.paymentMethod.toUpperCase()}%0A-----------------------%0A*ITEMS:*%0A`;
             cart.forEach(i => {
-                const unit = i.isWeight === 'true' ? 'Kg' : 'Unit';
-                msg += `> ${i.name} (${i.qty} ${unit}) - Rs.${(i.qty * parseFloat(i.calcPrice)).toFixed(2)}%0A`;
+                const unit = (i.isWeight === 'true' || i.isWeight === true) ? 'Kg' : 'Unit';
+                const pToUse = i.calcPrice !== undefined ? i.calcPrice : i.price;
+                msg += `> ${i.name} (${i.qty} ${unit}) - Rs.${(i.qty * parseFloat(pToUse)).toFixed(2)}%0A`;
             });
             msg += `-----------------------%0A*TOTAL: Rs. ${total.toFixed(2)}*%0A-----------------------`;
 
-            cart = [];
-            localStorage.setItem('jsuper_cart', '[]');
-            updateCartUI();
-            closeAuthModal();
-            toggleCart();
-
+            cart = []; localStorage.setItem('jsuper_cart', '[]'); updateCartUI(); closeAuthModal(); toggleCart();
             document.getElementById('successMsgText').innerText = `Your Order ID is ${orderId}\nRedirecting to WhatsApp...`;
             document.getElementById('successModal').classList.add('modal-active');
             
-            const adminPhone = settings.waAdmin.replace(/[^0-9]/g, '') || "94706717695";
-            setTimeout(() => {
-                document.getElementById('successModal').classList.remove('modal-active');
-                window.open(`https://wa.me/${adminPhone}?text=${msg}`, '_blank');
-            }, 2500);
+            const adminPhone = settings.waAdmin ? settings.waAdmin.replace(/[^0-9]/g, '') : "94706717695";
+            setTimeout(() => { document.getElementById('successModal').classList.remove('modal-active'); window.open(`https://wa.me/${adminPhone}?text=${msg}`, '_blank'); }, 2500);
         }
         
         function checkOrderStatus() {
@@ -650,15 +633,13 @@
             const orders = JSON.parse(localStorage.getItem('jsuper_orders')) || [];
             const res = document.getElementById('trackResult');
             res.classList.remove('hidden');
-            let order = orders.find(o => o.id === id || o.id === 'ORD-' + id);
+            let order = orders.find(o => String(o.id) === id || String(o.id) === 'ORD-' + id);
             if(order) {
                 let color = 'text-orange-500';
                 if(order.status === 'Shipped' || order.status === 'Delivered') color = 'text-green-600';
                 if(order.status === 'Cancelled') color = 'text-red-500';
                 res.innerHTML = `Order Status: <span class="${color} uppercase font-black">${order.status}</span>`;
-            } else {
-                res.innerHTML = '<span class="text-red-500">Order not found!</span>';
-            }
+            } else { res.innerHTML = '<span class="text-red-500">Order not found!</span>'; }
         }
         
         function viewPage(key, title) {
@@ -671,8 +652,8 @@
             document.getElementById('footerColumns').innerHTML = `
                 <div>
                     <h3 class="text-xl font-black text-white mb-4">J SUPER<span class="text-orange-500">.LK</span></h3>
-                    <p class="mb-2 text-slate-400 text-xs leading-relaxed"><i class="fa-solid fa-location-dot mr-2 text-orange-500"></i> ${settings.address}</p>
-                    <p class="mb-2 font-bold text-white text-xs"><i class="fa-solid fa-phone mr-2 text-orange-500"></i> ${settings.phones}</p>
+                    <p class="mb-2 text-slate-400 text-xs leading-relaxed"><i class="fa-solid fa-location-dot mr-2 text-orange-500"></i> ${settings.address||''}</p>
+                    <p class="mb-2 font-bold text-white text-xs"><i class="fa-solid fa-phone mr-2 text-orange-500"></i> ${settings.phones||''}</p>
                 </div>
                 <div>
                     <h4 class="text-white font-bold mb-4 uppercase tracking-wider text-xs border-b border-slate-700 pb-2">Quick Links</h4>
@@ -688,15 +669,8 @@
             let directors = JSON.parse(localStorage.getItem('jsuper_directors')) || [];
             const grid = document.getElementById('directorsGrid');
             if(directors.length === 0) { grid.innerHTML = '<div class="col-span-full text-center text-slate-600 text-xs">No directors added.</div>'; return; }
-            grid.innerHTML = directors.map(d => `
-                <div class="bg-slate-800 rounded-2xl p-4 text-center border border-slate-700 hover:border-green-500 transition">
-                    <img src="${d.img || 'https://via.placeholder.com/100'}" class="w-16 h-16 rounded-full mx-auto object-cover border-2 border-slate-600 mb-3 shadow-lg">
-                    <h5 class="font-black text-white text-sm uppercase">${d.name}</h5>
-                    <p class="text-[10px] text-green-400 font-bold mt-1 uppercase tracking-wide">${d.role}</p>
-                </div>
-            `).join('');
+            grid.innerHTML = directors.map(d => `<div class="bg-slate-800 rounded-2xl p-4 text-center border border-slate-700 hover:border-green-500 transition"><img src="${d.img || 'https://via.placeholder.com/100'}" class="w-16 h-16 rounded-full mx-auto object-cover border-2 border-slate-600 mb-3 shadow-lg"><h5 class="font-black text-white text-sm uppercase">${d.name}</h5><p class="text-[10px] text-green-400 font-bold mt-1 uppercase tracking-wide">${d.role}</p></div>`).join('');
         }
-
     </script>
 </body>
 </html>
