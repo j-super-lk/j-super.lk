@@ -60,13 +60,12 @@
                 <button onclick="switchTab('adsTab')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition font-bold text-sm flex items-center gap-3"><i class="fa-solid fa-image text-purple-400"></i> Banners / Ads</button>
                 <button onclick="switchTab('settingsTab')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition font-bold text-sm flex items-center gap-3"><i class="fa-solid fa-gear text-orange-400"></i> Web Settings</button>
                 <button onclick="switchTab('directorsTab')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition font-bold text-sm flex items-center gap-3"><i class="fa-solid fa-users text-teal-400"></i> Directors Board</button>
-                
                 <button id="nav-staff" onclick="switchTab('staffTab')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition font-bold text-sm flex items-center gap-3" style="display: none;">
                     <i class="fa-solid fa-users-gear text-slate-400"></i> Staff Management
                 </button>
             </nav>
             <div class="p-4 border-t border-slate-800">
-                <a href="index.html" class="w-full block text-center bg-green-600 hover:bg-green-700 text-white font-black py-3 rounded-xl transition shadow-lg"><i class="fa-solid fa-globe mr-2"></i> VIEW SITE</a>
+                <a href="index.html" target="_blank" class="w-full block text-center bg-green-600 hover:bg-green-700 text-white font-black py-3 rounded-xl transition shadow-lg"><i class="fa-solid fa-globe mr-2"></i> VIEW SITE</a>
             </div>
         </aside>
 
@@ -167,6 +166,7 @@
                         <h3 class="text-2xl font-black text-slate-800 mb-8"><i class="fa-solid fa-gear text-orange-500 mr-2"></i> Web & Payment Settings</h3>
                         
                         <form id="settingsForm" onsubmit="saveWebSettings(event)" class="space-y-6">
+                            
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label class="font-black text-slate-700 text-sm mb-2 block">Admin WhatsApp (For Orders)</label>
@@ -174,7 +174,45 @@
                                 </div>
                                 <div>
                                     <label class="font-black text-slate-700 text-sm mb-2 block">Top Nav Links (Comma Sep)</label>
-                                    <input type="text" id="setNavLinks" class="w-full border p-3 rounded-lg focus:outline-none focus:border-green-500 bg-slate-50" required>
+                                    <input type="text" id="setNavLinks" class="w-full border p-3 rounded-lg focus:outline-none focus:border-green-500 bg-slate-50">
+                                </div>
+                            </div>
+                            
+                            <div class="border-t border-slate-200 pt-6">
+                                <h4 class="font-black text-lg mb-4 text-slate-700">Frontend Background Image</h4>
+                                <div class="flex items-center gap-4">
+                                    <div class="w-24 h-24 bg-slate-100 rounded-xl border border-dashed flex items-center justify-center overflow-hidden">
+                                        <img id="setBgImgPreview" class="w-full h-full object-cover" src="">
+                                    </div>
+                                    <div class="flex-1">
+                                        <input type="file" accept="image/*" onchange="convertImage(this, 'setBgImgBase64', 'setBgImgPreview', true)" class="w-full text-sm border p-2 rounded bg-slate-50">
+                                        <input type="hidden" id="setBgImgBase64">
+                                        <p class="text-xs text-slate-500 mt-2">Upload realistic drone shot (e.g. Ratnapura Clock Tower). It will be blurred automatically in frontend.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border-t border-slate-200 pt-6">
+                                <h4 class="font-black text-lg mb-4 text-slate-700">Delivery Costs (Rs.)</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="font-black text-slate-700 text-sm mb-2 block">PickMe Flash Cost</label>
+                                        <input type="number" step="0.01" id="setCostPickme" class="w-full border p-3 rounded-lg focus:outline-none focus:border-green-500 bg-slate-50" placeholder="e.g. 500">
+                                    </div>
+                                    <div>
+                                        <label class="font-black text-slate-700 text-sm mb-2 block">J Super Delivery Cost</label>
+                                        <input type="number" step="0.01" id="setCostJsuper" class="w-full border p-3 rounded-lg focus:outline-none focus:border-green-500 bg-slate-50" placeholder="e.g. 300">
+                                    </div>
+                                </div>
+                                <p class="text-[10px] text-slate-500 mt-2">* Customer Pickup is always Free (Rs. 0)</p>
+                            </div>
+
+                            <div class="border-t border-slate-200 pt-6">
+                                <h4 class="font-black text-lg mb-4 text-slate-700">Social Media Links (Footer)</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div><label class="text-xs font-bold text-blue-600"><i class="fa-brands fa-facebook"></i> Facebook URL</label><input type="text" id="setFb" class="w-full border p-2 rounded text-xs bg-slate-50 mt-1"></div>
+                                    <div><label class="text-xs font-bold text-black"><i class="fa-brands fa-tiktok"></i> TikTok URL</label><input type="text" id="setTiktok" class="w-full border p-2 rounded text-xs bg-slate-50 mt-1"></div>
+                                    <div><label class="text-xs font-bold text-green-600"><i class="fa-brands fa-whatsapp"></i> WhatsApp Group/Link</label><input type="text" id="setWa" class="w-full border p-2 rounded text-xs bg-slate-50 mt-1"></div>
                                 </div>
                             </div>
 
@@ -221,7 +259,6 @@
 
                 <div id="staffTab" class="tab-content max-w-5xl mx-auto">
                     <h2 class="text-2xl font-black mb-6 text-slate-800">Staff Management (Super Admin Only)</h2>
-                    
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                             <h3 class="font-bold text-slate-700 mb-4 border-b pb-2"><i class="fa-solid fa-user-plus mr-2"></i>Add New Staff</h3>
@@ -234,7 +271,6 @@
                                     <option value="Cashier">Cashier</option>
                                     <option value="Manager">Manager</option>
                                 </select>
-                                
                                 <div class="bg-slate-50 p-3 rounded-lg border">
                                     <p class="text-xs font-bold mb-2 text-slate-600">Select Permissions:</p>
                                     <div class="grid grid-cols-2 gap-2 text-sm text-slate-700">
@@ -247,7 +283,6 @@
                                 <button type="submit" class="w-full bg-teal-600 text-white font-bold py-2 rounded-lg hover:bg-teal-700 text-sm">Create User</button>
                             </form>
                         </div>
-
                         <div class="space-y-6">
                             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                                 <h3 class="font-bold text-slate-700 mb-4 border-b pb-2"><i class="fa-solid fa-key mr-2"></i>Change My Password</h3>
@@ -256,16 +291,13 @@
                                     <button type="submit" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-slate-900 whitespace-nowrap">Update</button>
                                 </form>
                             </div>
-
                             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                                 <h3 class="font-bold text-slate-700 mb-4 border-b pb-2"><i class="fa-solid fa-users mr-2"></i>Active Staff</h3>
-                                <div id="staffList" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
-                                    </div>
+                                <div id="staffList" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar"></div>
                             </div>
                         </div>
                     </div>
                 </div>
-
             </div>
         </main>
     </div>
@@ -274,7 +306,6 @@
         <div class="bg-white rounded-3xl p-6 w-full max-w-2xl shadow-2xl relative border-t-4 border-green-500 my-8">
             <button onclick="closeModal('productModal')" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 text-2xl"><i class="fa-solid fa-times"></i></button>
             <h3 class="text-xl font-black text-slate-800 mb-6"><i class="fa-solid fa-box text-green-500 mr-2"></i> Add / Edit Product</h3>
-            
             <form onsubmit="saveProduct(event)" class="space-y-4">
                 <input type="hidden" id="pId">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -286,18 +317,9 @@
                             <option value="true">Weighable (Per Kg/g)</option>
                         </select>
                     </div>
-                    
-                    <div>
-                        <label class="text-xs font-black uppercase mb-1 block">Category</label>
-                        <select id="pCat" onchange="updateSubcatDropdown()" class="w-full border p-2 rounded-lg bg-slate-50 focus:border-green-500 outline-none" required></select>
-                    </div>
-                    <div>
-                        <label class="text-xs font-black uppercase mb-1 block">Sub-Category</label>
-                        <select id="pSubcat" class="w-full border p-2 rounded-lg bg-slate-50 focus:border-green-500 outline-none hidden"><option value="">No Sub-category</option></select>
-                    </div>
-
+                    <div><label class="text-xs font-black uppercase mb-1 block">Category</label><select id="pCat" onchange="updateSubcatDropdown()" class="w-full border p-2 rounded-lg bg-slate-50 focus:border-green-500 outline-none" required></select></div>
+                    <div><label class="text-xs font-black uppercase mb-1 block">Sub-Category</label><select id="pSubcat" class="w-full border p-2 rounded-lg bg-slate-50 focus:border-green-500 outline-none hidden"><option value="">No Sub-category</option></select></div>
                     <div><label class="text-xs font-black uppercase mb-1 block">Price (Rs.)</label><input type="number" step="0.01" id="pPrice" class="w-full border p-2 rounded-lg bg-slate-50 font-bold text-green-700 outline-none" required></div>
-                    
                     <div>
                         <label class="text-xs font-black uppercase mb-1 block">Discount Type</label>
                         <select id="pDiscType" class="w-full border p-2 rounded-lg bg-slate-50 focus:border-green-500 outline-none">
@@ -306,9 +328,7 @@
                     </div>
                     <div><label class="text-xs font-black uppercase mb-1 block">Discount Value</label><input type="number" step="0.01" id="pDiscVal" class="w-full border p-2 rounded-lg bg-slate-50 outline-none" value="0"></div>
                 </div>
-
                 <div><label class="text-xs font-black uppercase mb-1 block">Short Description</label><textarea id="pDesc" rows="2" class="w-full border p-2 rounded-lg bg-slate-50 outline-none"></textarea></div>
-                
                 <div class="bg-slate-100 p-4 rounded-xl border border-dashed flex items-center gap-4">
                     <div class="flex-1">
                         <label class="text-xs font-black uppercase mb-1 block">Product Image</label>
@@ -317,7 +337,6 @@
                     </div>
                     <div class="w-16 h-16 bg-white border rounded flex items-center justify-center overflow-hidden" id="pImgPreviewBox"><i class="fa-solid fa-image text-slate-300"></i></div>
                 </div>
-
                 <button type="submit" class="w-full bg-green-600 text-white font-black py-3 rounded-xl shadow-lg mt-4 text-lg hover:bg-green-700 transition">Save Product</button>
             </form>
         </div>
@@ -350,7 +369,7 @@
     </div>
 
     <script>
-        // Tab Navigation
+        // Utilities
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(el => { el.classList.remove('active-btn'); el.style.backgroundColor = ''; });
@@ -360,47 +379,7 @@
         }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-        // Sanitize existing items to ensure unique string IDs
-        function initAdminData() {
-            let prods = JSON.parse(localStorage.getItem('jsuper_products')) || [];
-            let changed = false;
-            let seen = new Set();
-            prods.forEach(p => {
-                let idStr = String(p.id).trim();
-                if(!idStr || idStr === 'undefined' || seen.has(idStr)) {
-                    p.id = String(Date.now() + Math.floor(Math.random() * 100000));
-                    changed = true;
-                }
-                seen.add(String(p.id));
-            });
-            if(changed) localStorage.setItem('jsuper_products', JSON.stringify(prods));
-            
-            let cats = JSON.parse(localStorage.getItem('jsuper_cats'));
-            if(!cats || cats.length===0) {
-                const defaultCats = [{ name: 'Vegetables', active: true, subcats: ['Leafy Greens', 'Root Vegetables'] }, { name: 'Fruits', active: true, subcats: [] }, { name: 'Meat', active: true, subcats: [] }, { name: 'Seafood', active: true, subcats: [] }, { name: 'Beverages', active: true, subcats: [] }];
-                localStorage.setItem('jsuper_cats', JSON.stringify(defaultCats));
-            }
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            initAdminData();
-            loadProducts();
-            loadAds();
-            loadSettings();
-            loadDirectors();
-            renderCategoriesTab();
-            populateReportCategories();
-            loadSavedSound();
-            
-            lastOrderCount = (JSON.parse(localStorage.getItem('jsuper_orders')) || []).length;
-            renderOrders();
-            setInterval(pollOrders, 2000);
-
-            // අලුතින් එකතු කරපු Auth Initialize එක
-            initAuth();
-        });
-
-        function convertImage(input, hiddenId, previewId) {
+        function convertImage(input, hiddenId, previewId, reduceSize=false) {
             const file = input.files[0];
             if (file) {
                 const reader = new FileReader();
@@ -409,13 +388,17 @@
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
-                        const MAX = 600; let w = img.width; let h = img.height;
+                        const MAX = reduceSize ? 1200 : 600; // BG image can be a bit larger
+                        let w = img.width; let h = img.height;
                         if (w > MAX) { h *= MAX / w; w = MAX; }
                         canvas.width = w; canvas.height = h;
                         ctx.drawImage(img, 0, 0, w, h);
-                        const b64 = canvas.toDataURL('image/jpeg', 0.8);
+                        const b64 = canvas.toDataURL('image/jpeg', reduceSize ? 0.6 : 0.8);
                         document.getElementById(hiddenId).value = b64;
-                        if(previewId) document.getElementById(previewId).innerHTML = `<img src="${b64}" class="w-full h-full object-cover">`;
+                        if(previewId) {
+                            if(document.getElementById(previewId).tagName === 'IMG') { document.getElementById(previewId).src = b64; } 
+                            else { document.getElementById(previewId).innerHTML = `<img src="${b64}" class="w-full h-full object-cover">`; }
+                        }
                     };
                     img.src = e.target.result;
                 };
@@ -423,169 +406,25 @@
             }
         }
 
-        // ================= CATEGORIES =================
-        function renderCategoriesTab() {
-            let cats = JSON.parse(localStorage.getItem('jsuper_cats')) || [];
-            let html = '';
-            cats.forEach((c, idx) => {
-                let subHtml = (c.subcats||[]).map(s => `<span class="bg-slate-200 text-slate-700 px-2 py-1 rounded text-[10px] m-1 inline-flex items-center gap-1">${s} <button onclick="delSubcat(${idx}, '${s}')" class="text-red-500"><i class="fa-solid fa-times"></i></button></span>`).join('');
-                html += `
-                    <div class="border p-4 rounded-xl flex justify-between items-center bg-slate-50 mb-3">
-                        <div>
-                            <h4 class="font-black text-sm">${c.name} ${c.active===false ? '<span class="text-red-500 text-[10px]">Inactive</span>' : '<span class="text-green-500 text-[10px]">Active</span>'}</h4>
-                            <div class="mt-1">${subHtml}</div>
-                        </div>
-                        <div class="flex flex-col gap-1 md:flex-row">
-                            <button onclick="toggleCat(${idx})" class="text-[10px] px-2 py-1 border rounded font-bold bg-white hover:bg-slate-100">Toggle Status</button>
-                            <button onclick="addSubcat(${idx})" class="text-[10px] px-2 py-1 border rounded font-bold bg-blue-50 text-blue-700 hover:bg-blue-100">+ Subcat</button>
-                            <button onclick="delCat(${idx})" class="text-[10px] px-2 py-1 border rounded font-bold bg-red-50 text-red-600"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>
-                `;
-            });
-            document.getElementById('adminCatList').innerHTML = html;
-        }
+        // Init
+        document.addEventListener("DOMContentLoaded", () => {
+            initAdminData(); loadProducts(); loadAds(); loadSettings(); loadDirectors(); renderCategoriesTab(); populateReportCategories(); loadSavedSound();
+            lastOrderCount = (JSON.parse(localStorage.getItem('jsuper_orders')) || []).length;
+            renderOrders(); setInterval(pollOrders, 2000); initAuth();
+        });
 
-        function addCategory() {
-            let n = prompt("Category Name:");
-            if(n) {
-                let cats = JSON.parse(localStorage.getItem('jsuper_cats')) || [];
-                cats.push({name:n, active:true, subcats:[]});
-                localStorage.setItem('jsuper_cats', JSON.stringify(cats)); renderCategoriesTab();
-            }
-        }
-        function delCat(idx) {
-            if(confirm("Delete category?")) {
-                let cats = JSON.parse(localStorage.getItem('jsuper_cats')); cats.splice(idx, 1);
-                localStorage.setItem('jsuper_cats', JSON.stringify(cats)); renderCategoriesTab();
-            }
-        }
-        function toggleCat(idx) {
-            let cats = JSON.parse(localStorage.getItem('jsuper_cats')); cats[idx].active = cats[idx].active === false ? true : false;
-            localStorage.setItem('jsuper_cats', JSON.stringify(cats)); renderCategoriesTab();
-        }
-        function addSubcat(idx) {
-            let n = prompt("Sub-category Name:");
-            if(n) {
-                let cats = JSON.parse(localStorage.getItem('jsuper_cats'));
-                if(!cats[idx].subcats) cats[idx].subcats = [];
-                cats[idx].subcats.push(n);
-                localStorage.setItem('jsuper_cats', JSON.stringify(cats)); renderCategoriesTab();
-            }
-        }
-        function delSubcat(idx, s) {
-            let cats = JSON.parse(localStorage.getItem('jsuper_cats'));
-            cats[idx].subcats = cats[idx].subcats.filter(x => x !== s);
-            localStorage.setItem('jsuper_cats', JSON.stringify(cats)); renderCategoriesTab();
-        }
-        function updateSubcatDropdown() {
-            let cats = JSON.parse(localStorage.getItem('jsuper_cats')) || [];
-            let catName = document.getElementById('pCat').value;
-            let c = cats.find(x => x.name === catName);
-            let sub = document.getElementById('pSubcat');
-            if(c && c.subcats && c.subcats.length > 0) {
-                sub.innerHTML = '<option value="">No Subcategory</option>' + c.subcats.map(s => `<option value="${s}">${s}</option>`).join('');
-                sub.classList.remove('hidden');
-            } else {
-                sub.innerHTML = '<option value="">No Subcategory</option>';
-                sub.classList.add('hidden');
-            }
-        }
-
-        // ================= INVENTORY =================
-        function loadProducts() {
-            const prods = JSON.parse(localStorage.getItem('jsuper_products')) || [];
-            document.getElementById('prodCount').innerText = prods.length;
-            const tbody = document.getElementById('adminProductTable');
-            tbody.innerHTML = '';
+        function initAdminData() {
+            let prods = JSON.parse(localStorage.getItem('jsuper_products')) || [];
+            let changed = false; let seen = new Set();
             prods.forEach(p => {
-                let discInfo = p.discType!=='none' && p.discVal>0 ? `<br><span class="text-red-500 text-[10px]">Disc: ${p.discVal}${p.discType==='percent'?'%':'Rs'}</span>` : '';
-                tbody.innerHTML += `
-                    <tr class="border-b">
-                        <td class="p-4"><img src="${p.img||''}" class="w-10 h-10 object-cover rounded"></td>
-                        <td class="p-4"><div class="font-bold text-sm">${p.name}</div><div class="text-[10px] text-slate-500 w-32 truncate">${p.desc}</div></td>
-                        <td class="p-4 text-xs"><span class="bg-slate-100 px-2 py-1 rounded">${p.category}</span><br><span class="text-[9px]">${p.subcategory||''}</span></td>
-                        <td class="p-4 text-xs">${p.isWeight==='true'?'Kg/g':'Unit'}</td>
-                        <td class="p-4 font-bold text-green-700">Rs. ${parseFloat(p.price).toFixed(2)}${discInfo}</td>
-                        <td class="p-4 text-right">
-                            <button onclick="openProductModal('${p.id}')" class="text-blue-500 hover:bg-blue-50 p-2 rounded mr-1"><i class="fa-solid fa-edit"></i></button>
-                            <button onclick="delProduct('${p.id}')" class="text-red-500 hover:bg-red-50 p-2 rounded"><i class="fa-solid fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `;
+                let idStr = String(p.id).trim();
+                if(!idStr || idStr === 'undefined' || seen.has(idStr)) { p.id = String(Date.now() + Math.floor(Math.random() * 100000)); changed = true; }
+                seen.add(String(p.id));
             });
-        }
-        
-        function openProductModal(id = null) {
-            let cats = JSON.parse(localStorage.getItem('jsuper_cats')) || [];
-            document.getElementById('pCat').innerHTML = cats.filter(c=>c.active!==false).map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
-            
-            if(id) {
-                let list = JSON.parse(localStorage.getItem('jsuper_products')) || [];
-                let p = list.find(x => String(x.id).trim() === String(id).trim());
-                if(p) {
-                    document.getElementById('pId').value = p.id;
-                    document.getElementById('pName').value = p.name;
-                    document.getElementById('pWeight').value = p.isWeight;
-                    document.getElementById('pCat').value = p.category;
-                    updateSubcatDropdown();
-                    document.getElementById('pSubcat').value = p.subcategory || '';
-                    document.getElementById('pPrice').value = p.price;
-                    document.getElementById('pDiscType').value = p.discType || 'none';
-                    document.getElementById('pDiscVal').value = p.discVal || 0;
-                    document.getElementById('pDesc').value = p.desc;
-                    document.getElementById('pImgB64').value = p.img || '';
-                    document.getElementById('pImgPreviewBox').innerHTML = p.img ? `<img src="${p.img}" class="w-full h-full object-cover">` : '<i class="fa-solid fa-image text-slate-300"></i>';
-                }
-            } else {
-                document.getElementById('pId').value = '';
-                document.getElementById('pName').value = '';
-                document.getElementById('pPrice').value = '';
-                document.getElementById('pDesc').value = '';
-                document.getElementById('pDiscVal').value = '0';
-                document.getElementById('pImgB64').value = '';
-                document.getElementById('pImgPreviewBox').innerHTML = '<i class="fa-solid fa-image text-slate-300"></i>';
-                updateSubcatDropdown();
-            }
-            document.getElementById('productModal').classList.remove('hidden');
+            if(changed) localStorage.setItem('jsuper_products', JSON.stringify(prods));
         }
 
-        function saveProduct(e) {
-            e.preventDefault();
-            let list = JSON.parse(localStorage.getItem('jsuper_products')) || [];
-            let id = document.getElementById('pId').value;
-            
-            let obj = {
-                id: id ? String(id).trim() : String(Date.now()),
-                name: document.getElementById('pName').value,
-                category: document.getElementById('pCat').value,
-                subcategory: document.getElementById('pSubcat').value,
-                price: document.getElementById('pPrice').value,
-                isWeight: document.getElementById('pWeight').value,
-                desc: document.getElementById('pDesc').value,
-                discType: document.getElementById('pDiscType').value,
-                discVal: document.getElementById('pDiscVal').value,
-                img: document.getElementById('pImgB64').value
-            };
-            
-            if(id) {
-                list = list.map(x => String(x.id).trim() === String(id).trim() ? obj : x);
-            } else {
-                list.unshift(obj);
-            }
-            localStorage.setItem('jsuper_products', JSON.stringify(list));
-            closeModal('productModal'); loadProducts();
-        }
-        
-        function delProduct(id) {
-            if(confirm("Delete product?")) {
-                let list = JSON.parse(localStorage.getItem('jsuper_products'));
-                localStorage.setItem('jsuper_products', JSON.stringify(list.filter(p => String(p.id).trim() !== String(id).trim()))); 
-                loadProducts();
-            }
-        }
-
-        // ================= SETTINGS =================
+        // ================= SETTINGS (UPDATED) =================
         function loadSettings() {
             let s = JSON.parse(localStorage.getItem('jsuper_settings')) || {navLinks:'J SUPER PRODUCTS, EXCLUSIVES'};
             document.getElementById('setWaAdmin').value = s.waAdmin || '94706717695';
@@ -600,6 +439,16 @@
             document.getElementById('setDelivery').value = s.delivery || '';
             document.getElementById('setAddress').value = s.address || '';
             document.getElementById('setPhones').value = s.phones || '';
+            // New fields
+            document.getElementById('setFb').value = s.fb || '';
+            document.getElementById('setTiktok').value = s.tiktok || '';
+            document.getElementById('setWa').value = s.wa || '';
+            document.getElementById('setCostPickme').value = s.costPickme || '0';
+            document.getElementById('setCostJsuper').value = s.costJsuper || '0';
+            if(s.bgImage) {
+                document.getElementById('setBgImgBase64').value = s.bgImage;
+                document.getElementById('setBgImgPreview').src = s.bgImage;
+            }
         }
         function saveWebSettings(e) {
             e.preventDefault();
@@ -615,308 +464,116 @@
                 terms: document.getElementById('setTerms').value,
                 delivery: document.getElementById('setDelivery').value,
                 address: document.getElementById('setAddress').value,
-                phones: document.getElementById('setPhones').value
+                phones: document.getElementById('setPhones').value,
+                // New Fields
+                fb: document.getElementById('setFb').value,
+                tiktok: document.getElementById('setTiktok').value,
+                wa: document.getElementById('setWa').value,
+                costPickme: document.getElementById('setCostPickme').value,
+                costJsuper: document.getElementById('setCostJsuper').value,
+                bgImage: document.getElementById('setBgImgBase64').value
             };
             localStorage.setItem('jsuper_settings', JSON.stringify(s));
-            alert("Settings Saved!");
+            alert("Settings Saved Successfully!");
         }
 
-        // ================= LIVE ORDERS & SOUND =================
-        let orderAudio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg'); 
-        let audioContextEnabled = false;
-        let lastOrderCount = 0;
-
-        function enableAudioContext() {
-            orderAudio.play().then(() => {
-                orderAudio.pause(); orderAudio.currentTime = 0; audioContextEnabled = true;
-                document.getElementById('enableSoundBtn').className = "bg-green-100 text-green-700 px-4 py-2 rounded-lg text-xs font-bold border border-green-200";
-                document.getElementById('enableSoundBtn').innerHTML = '<i class="fa-solid fa-check mr-1"></i> Sound ON';
-            }).catch(e => console.log(e));
+        // ================= CATEGORIES & INVENTORY & OTHERS =================
+        function renderCategoriesTab() {
+            let cats = JSON.parse(localStorage.getItem('jsuper_cats')) || [];
+            let html = '';
+            cats.forEach((c, idx) => {
+                let subHtml = (c.subcats||[]).map(s => `<span class="bg-slate-200 text-slate-700 px-2 py-1 rounded text-[10px] m-1 inline-flex items-center gap-1">${s} <button onclick="delSubcat(${idx}, '${s}')" class="text-red-500"><i class="fa-solid fa-times"></i></button></span>`).join('');
+                html += `<div class="border p-4 rounded-xl flex justify-between items-center bg-slate-50 mb-3"><div><h4 class="font-black text-sm">${c.name} ${c.active===false ? '<span class="text-red-500 text-[10px]">Inactive</span>' : '<span class="text-green-500 text-[10px]">Active</span>'}</h4><div class="mt-1">${subHtml}</div></div><div class="flex flex-col gap-1 md:flex-row"><button onclick="toggleCat(${idx})" class="text-[10px] px-2 py-1 border rounded font-bold bg-white hover:bg-slate-100">Toggle Status</button><button onclick="addSubcat(${idx})" class="text-[10px] px-2 py-1 border rounded font-bold bg-blue-50 text-blue-700 hover:bg-blue-100">+ Subcat</button><button onclick="delCat(${idx})" class="text-[10px] px-2 py-1 border rounded font-bold bg-red-50 text-red-600"><i class="fa-solid fa-trash"></i></button></div></div>`;
+            });
+            document.getElementById('adminCatList').innerHTML = html;
         }
-        function changeNotifSound(input) {
-            const file = input.files[0];
-            if(file) {
-                const reader = new FileReader();
-                reader.onload = e => { localStorage.setItem('jsuper_sound', e.target.result); orderAudio = new Audio(e.target.result); alert("Sound Updated"); };
-                reader.readAsDataURL(file);
+        function addCategory() { let n = prompt("Category Name:"); if(n) { let cats = JSON.parse(localStorage.getItem('jsuper_cats')) || []; cats.push({name:n, active:true, subcats:[]}); localStorage.setItem('jsuper_cats', JSON.stringify(cats)); renderCategoriesTab(); } }
+        function delCat(idx) { if(confirm("Delete category?")) { let cats = JSON.parse(localStorage.getItem('jsuper_cats')); cats.splice(idx, 1); localStorage.setItem('jsuper_cats', JSON.stringify(cats)); renderCategoriesTab(); } }
+        function toggleCat(idx) { let cats = JSON.parse(localStorage.getItem('jsuper_cats')); cats[idx].active = cats[idx].active === false ? true : false; localStorage.setItem('jsuper_cats', JSON.stringify(cats)); renderCategoriesTab(); }
+        function addSubcat(idx) { let n = prompt("Sub-category Name:"); if(n) { let cats = JSON.parse(localStorage.getItem('jsuper_cats')); if(!cats[idx].subcats) cats[idx].subcats = []; cats[idx].subcats.push(n); localStorage.setItem('jsuper_cats', JSON.stringify(cats)); renderCategoriesTab(); } }
+        function delSubcat(idx, s) { let cats = JSON.parse(localStorage.getItem('jsuper_cats')); cats[idx].subcats = cats[idx].subcats.filter(x => x !== s); localStorage.setItem('jsuper_cats', JSON.stringify(cats)); renderCategoriesTab(); }
+        function updateSubcatDropdown() { let cats = JSON.parse(localStorage.getItem('jsuper_cats')) || []; let catName = document.getElementById('pCat').value; let c = cats.find(x => x.name === catName); let sub = document.getElementById('pSubcat'); if(c && c.subcats && c.subcats.length > 0) { sub.innerHTML = '<option value="">No Subcategory</option>' + c.subcats.map(s => `<option value="${s}">${s}</option>`).join(''); sub.classList.remove('hidden'); } else { sub.innerHTML = '<option value="">No Subcategory</option>'; sub.classList.add('hidden'); } }
+
+        function loadProducts() {
+            const prods = JSON.parse(localStorage.getItem('jsuper_products')) || [];
+            document.getElementById('prodCount').innerText = prods.length;
+            const tbody = document.getElementById('adminProductTable'); tbody.innerHTML = '';
+            prods.forEach(p => {
+                let discInfo = p.discType!=='none' && p.discVal>0 ? `<br><span class="text-red-500 text-[10px]">Disc: ${p.discVal}${p.discType==='percent'?'%':'Rs'}</span>` : '';
+                tbody.innerHTML += `<tr class="border-b"><td class="p-4"><img src="${p.img||''}" class="w-10 h-10 object-cover rounded"></td><td class="p-4"><div class="font-bold text-sm">${p.name}</div><div class="text-[10px] text-slate-500 w-32 truncate">${p.desc}</div></td><td class="p-4 text-xs"><span class="bg-slate-100 px-2 py-1 rounded">${p.category}</span><br><span class="text-[9px]">${p.subcategory||''}</span></td><td class="p-4 text-xs">${p.isWeight==='true'?'Kg/g':'Unit'}</td><td class="p-4 font-bold text-green-700">Rs. ${parseFloat(p.price).toFixed(2)}${discInfo}</td><td class="p-4 text-right"><button onclick="openProductModal('${p.id}')" class="text-blue-500 hover:bg-blue-50 p-2 rounded mr-1"><i class="fa-solid fa-edit"></i></button><button onclick="delProduct('${p.id}')" class="text-red-500 hover:bg-red-50 p-2 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+            });
+        }
+        function openProductModal(id = null) {
+            let cats = JSON.parse(localStorage.getItem('jsuper_cats')) || [];
+            document.getElementById('pCat').innerHTML = cats.filter(c=>c.active!==false).map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
+            if(id) {
+                let list = JSON.parse(localStorage.getItem('jsuper_products')) || []; let p = list.find(x => String(x.id).trim() === String(id).trim());
+                if(p) { document.getElementById('pId').value = p.id; document.getElementById('pName').value = p.name; document.getElementById('pWeight').value = p.isWeight; document.getElementById('pCat').value = p.category; updateSubcatDropdown(); document.getElementById('pSubcat').value = p.subcategory || ''; document.getElementById('pPrice').value = p.price; document.getElementById('pDiscType').value = p.discType || 'none'; document.getElementById('pDiscVal').value = p.discVal || 0; document.getElementById('pDesc').value = p.desc; document.getElementById('pImgB64').value = p.img || ''; document.getElementById('pImgPreviewBox').innerHTML = p.img ? `<img src="${p.img}" class="w-full h-full object-cover">` : '<i class="fa-solid fa-image text-slate-300"></i>'; }
+            } else {
+                document.getElementById('pId').value = ''; document.getElementById('pName').value = ''; document.getElementById('pPrice').value = ''; document.getElementById('pDesc').value = ''; document.getElementById('pDiscVal').value = '0'; document.getElementById('pImgB64').value = ''; document.getElementById('pImgPreviewBox').innerHTML = '<i class="fa-solid fa-image text-slate-300"></i>'; updateSubcatDropdown();
             }
+            document.getElementById('productModal').classList.remove('hidden');
         }
-        function loadSavedSound() {
-            const saved = localStorage.getItem('jsuper_sound'); if(saved) orderAudio = new Audio(saved);
+        function saveProduct(e) {
+            e.preventDefault(); let list = JSON.parse(localStorage.getItem('jsuper_products')) || []; let id = document.getElementById('pId').value;
+            let obj = { id: id ? String(id).trim() : String(Date.now()), name: document.getElementById('pName').value, category: document.getElementById('pCat').value, subcategory: document.getElementById('pSubcat').value, price: document.getElementById('pPrice').value, isWeight: document.getElementById('pWeight').value, desc: document.getElementById('pDesc').value, discType: document.getElementById('pDiscType').value, discVal: document.getElementById('pDiscVal').value, img: document.getElementById('pImgB64').value };
+            if(id) { list = list.map(x => String(x.id).trim() === String(id).trim() ? obj : x); } else { list.unshift(obj); }
+            localStorage.setItem('jsuper_products', JSON.stringify(list)); closeModal('productModal'); loadProducts();
         }
+        function delProduct(id) { if(confirm("Delete product?")) { let list = JSON.parse(localStorage.getItem('jsuper_products')); localStorage.setItem('jsuper_products', JSON.stringify(list.filter(p => String(p.id).trim() !== String(id).trim()))); loadProducts(); } }
 
+        // Orders
+        let orderAudio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg'); let audioContextEnabled = false; let lastOrderCount = 0;
+        function enableAudioContext() { orderAudio.play().then(() => { orderAudio.pause(); orderAudio.currentTime = 0; audioContextEnabled = true; document.getElementById('enableSoundBtn').className = "bg-green-100 text-green-700 px-4 py-2 rounded-lg text-xs font-bold border border-green-200"; document.getElementById('enableSoundBtn').innerHTML = '<i class="fa-solid fa-check mr-1"></i> Sound ON'; }).catch(e => console.log(e)); }
+        function changeNotifSound(input) { const file = input.files[0]; if(file) { const reader = new FileReader(); reader.onload = e => { localStorage.setItem('jsuper_sound', e.target.result); orderAudio = new Audio(e.target.result); alert("Sound Updated"); }; reader.readAsDataURL(file); } }
+        function loadSavedSound() { const saved = localStorage.getItem('jsuper_sound'); if(saved) orderAudio = new Audio(saved); }
         function renderOrders() {
             const orders = JSON.parse(localStorage.getItem('jsuper_orders')) || [];
-            document.getElementById('orderBadge').innerText = orders.length;
-            if(orders.length > 0) document.getElementById('orderBadge').classList.remove('hidden'); else document.getElementById('orderBadge').classList.add('hidden');
-            
+            document.getElementById('orderBadge').innerText = orders.length; if(orders.length > 0) document.getElementById('orderBadge').classList.remove('hidden'); else document.getElementById('orderBadge').classList.add('hidden');
             const container = document.getElementById('ordersContainer');
             if(orders.length === 0) { container.innerHTML = '<div class="p-8 text-center text-slate-400 font-bold">No orders yet.</div>'; return; }
-
             container.innerHTML = orders.map(o => {
                 let itemsHtml = o.items.map(i => `<div class="text-[10px] text-slate-600 truncate border-b border-slate-100 last:border-0 pb-1 mb-1">- ${i.name} (${i.qty})</div>`).join('');
                 let proofBtn = o.paymentProof ? `<a href="${o.paymentProof}" download="Proof_${o.id}" class="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded ml-2 font-bold"><i class="fa-solid fa-download"></i> Slip</a>` : '';
-                return `
-                <div class="p-4 hover:bg-slate-50 transition border-b flex flex-col md:flex-row justify-between gap-4">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="bg-green-600 text-white text-[10px] font-black px-2 py-0.5 rounded">${o.id}</span>
-                            <span class="text-[10px] text-slate-500">${o.date}</span>
-                            <span class="text-[10px] bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-black uppercase">${o.paymentMethod}</span>
-                            ${proofBtn}
-                        </div>
-                        <h4 class="font-black text-sm"><i class="fa-solid fa-user text-slate-400 mr-2"></i>${o.customer.name}</h4>
-                        <p class="text-xs text-slate-600"><i class="fa-solid fa-phone text-slate-400 mr-2"></i>${o.customer.phone} | <i class="fa-solid fa-map-pin text-slate-400 mx-1"></i>${o.customer.address||'Pickup'}</p>
-                        <div class="bg-slate-100 p-2 rounded mt-2 max-h-24 overflow-y-auto">${itemsHtml}</div>
-                    </div>
-                    <div class="text-right flex flex-col justify-between">
-                        <div>
-                            <select onchange="updateOrderStatus('${o.id}', this.value)" class="text-xs font-black p-1 border rounded focus:outline-none focus:border-green-500 mb-2">
-                                <option value="Pending" ${o.status==='Pending'?'selected':''}>Pending</option>
-                                <option value="Processing" ${o.status==='Processing'?'selected':''}>Processing</option>
-                                <option value="Shipped" ${o.status==='Shipped'?'selected':''}>Shipped</option>
-                                <option value="Delivered" ${o.status==='Delivered'?'selected':''}>Delivered</option>
-                                <option value="Cancelled" ${o.status==='Cancelled'?'selected':''}>Cancelled</option>
-                            </select>
-                            <div class="font-black text-green-700 text-lg">Rs. ${parseFloat(o.total).toFixed(2)}</div>
-                        </div>
-                        <button onclick="delOrder('${o.id}')" class="text-red-500 text-[10px] hover:underline mt-2">Delete</button>
-                    </div>
-                </div>
-                `;
+                
+                // NEW: Show delivery info in admin orders
+                let delText = o.deliveryType ? ` | Delivery: <strong>${o.deliveryType.toUpperCase()} (Rs.${o.deliveryCost||0})</strong>` : '';
+
+                return `<div class="p-4 hover:bg-slate-50 transition border-b flex flex-col md:flex-row justify-between gap-4"><div class="flex-1"><div class="flex items-center gap-2 mb-2"><span class="bg-green-600 text-white text-[10px] font-black px-2 py-0.5 rounded">${o.id}</span><span class="text-[10px] text-slate-500">${o.date}</span><span class="text-[10px] bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-black uppercase">${o.paymentMethod}</span>${proofBtn}</div><h4 class="font-black text-sm"><i class="fa-solid fa-user text-slate-400 mr-2"></i>${o.customer.name}</h4><p class="text-xs text-slate-600"><i class="fa-solid fa-phone text-slate-400 mr-2"></i>${o.customer.phone} | <i class="fa-solid fa-map-pin text-slate-400 mx-1"></i>${o.customer.address||'Pickup'} ${delText}</p><div class="bg-slate-100 p-2 rounded mt-2 max-h-24 overflow-y-auto">${itemsHtml}</div></div><div class="text-right flex flex-col justify-between"><div><select onchange="updateOrderStatus('${o.id}', this.value)" class="text-xs font-black p-1 border rounded focus:outline-none focus:border-green-500 mb-2"><option value="Pending" ${o.status==='Pending'?'selected':''}>Pending</option><option value="Processing" ${o.status==='Processing'?'selected':''}>Processing</option><option value="Shipped" ${o.status==='Shipped'?'selected':''}>Shipped</option><option value="Delivered" ${o.status==='Delivered'?'selected':''}>Delivered</option><option value="Cancelled" ${o.status==='Cancelled'?'selected':''}>Cancelled</option></select><div class="font-black text-green-700 text-lg">Rs. ${parseFloat(o.total).toFixed(2)}</div></div><button onclick="delOrder('${o.id}')" class="text-red-500 text-[10px] hover:underline mt-2">Delete</button></div></div>`;
             }).join('');
         }
-        function updateOrderStatus(id, status) {
-            let orders = JSON.parse(localStorage.getItem('jsuper_orders')) || [];
-            orders = orders.map(o => { if(String(o.id) === String(id)) o.status = status; return o; });
-            localStorage.setItem('jsuper_orders', JSON.stringify(orders));
-        }
-        function delOrder(id) {
-            if(confirm("Delete this order?")) {
-                let orders = JSON.parse(localStorage.getItem('jsuper_orders'));
-                localStorage.setItem('jsuper_orders', JSON.stringify(orders.filter(o => String(o.id) !== String(id)))); renderOrders();
-            }
-        }
-        function clearOrders() {
-            if(confirm("Clear all orders?")) { localStorage.setItem('jsuper_orders', '[]'); lastOrderCount = 0; renderOrders(); }
-        }
-        function pollOrders() {
-            const orders = JSON.parse(localStorage.getItem('jsuper_orders')) || [];
-            if(orders.length > lastOrderCount) {
-                if(lastOrderCount !== 0 && audioContextEnabled) {
-                    orderAudio.play().catch(e=>{});
-                    const badge = document.getElementById('orderBadge'); badge.classList.add('blink-me'); setTimeout(() => badge.classList.remove('blink-me'), 5000);
-                }
-                lastOrderCount = orders.length; renderOrders();
-            } else if (orders.length < lastOrderCount) { lastOrderCount = orders.length; renderOrders(); }
-        }
+        function updateOrderStatus(id, status) { let orders = JSON.parse(localStorage.getItem('jsuper_orders')) || []; orders = orders.map(o => { if(String(o.id) === String(id)) o.status = status; return o; }); localStorage.setItem('jsuper_orders', JSON.stringify(orders)); }
+        function delOrder(id) { if(confirm("Delete this order?")) { let orders = JSON.parse(localStorage.getItem('jsuper_orders')); localStorage.setItem('jsuper_orders', JSON.stringify(orders.filter(o => String(o.id) !== String(id)))); renderOrders(); } }
+        function clearOrders() { if(confirm("Clear all orders?")) { localStorage.setItem('jsuper_orders', '[]'); lastOrderCount = 0; renderOrders(); } }
+        function pollOrders() { const orders = JSON.parse(localStorage.getItem('jsuper_orders')) || []; if(orders.length > lastOrderCount) { if(lastOrderCount !== 0 && audioContextEnabled) { orderAudio.play().catch(e=>{}); const badge = document.getElementById('orderBadge'); badge.classList.add('blink-me'); setTimeout(() => badge.classList.remove('blink-me'), 5000); } lastOrderCount = orders.length; renderOrders(); } else if (orders.length < lastOrderCount) { lastOrderCount = orders.length; renderOrders(); } }
 
-        // ================= REPORTS =================
-        function generateSalesReport() {
-            const start = document.getElementById('repStart').value;
-            const end = document.getElementById('repEnd').value;
-            const orders = JSON.parse(localStorage.getItem('jsuper_orders')) || [];
-            let filtered = orders;
-            if(start && end) {
-                const sDate = new Date(start); const eDate = new Date(end); eDate.setHours(23, 59, 59);
-                filtered = orders.filter(o => { const od = new Date(o.date); return od >= sDate && od <= eDate; });
-            }
-            let totalSales = filtered.filter(o => o.status !== 'Cancelled').reduce((sum, o) => sum + o.total, 0);
-            document.getElementById('salesReportResult').innerHTML = `<div class="text-center"><p class="text-xs text-slate-500 font-bold uppercase mb-1">Total Sales</p><h2 class="text-3xl font-black text-green-700 mb-2">Rs. ${totalSales.toFixed(2)}</h2><p class="text-sm font-bold text-slate-700">Valid Orders: ${filtered.filter(o=>o.status!=='Cancelled').length}</p></div>`;
-        }
-        function populateReportCategories() {
-            let cats = JSON.parse(localStorage.getItem('jsuper_cats')) || [];
-            document.getElementById('repInvCat').innerHTML = '<option value="all">All Categories</option>' + cats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-        }
-        function generateInventoryReport() {
-            const cat = document.getElementById('repInvCat').value;
-            const inv = JSON.parse(localStorage.getItem('jsuper_products')) || [];
-            let filtered = cat === 'all' ? inv : inv.filter(i => i.category === cat);
-            let html = '<table class="w-full text-left text-xs"><tr class="border-b"><th class="pb-2">Item</th><th class="pb-2 text-right">Price</th></tr>';
-            filtered.forEach(i => { html += `<tr class="border-b border-slate-100 last:border-0"><td class="py-2">${i.name}</td><td class="py-2 text-right text-green-700 font-bold">Rs. ${parseFloat(i.price).toFixed(2)}</td></tr>`; });
-            html += '</table>';
-            document.getElementById('invReportResult').innerHTML = html;
-        }
+        // Reports
+        function generateSalesReport() { const start = document.getElementById('repStart').value; const end = document.getElementById('repEnd').value; const orders = JSON.parse(localStorage.getItem('jsuper_orders')) || []; let filtered = orders; if(start && end) { const sDate = new Date(start); const eDate = new Date(end); eDate.setHours(23, 59, 59); filtered = orders.filter(o => { const od = new Date(o.date); return od >= sDate && od <= eDate; }); } let totalSales = filtered.filter(o => o.status !== 'Cancelled').reduce((sum, o) => sum + o.total, 0); document.getElementById('salesReportResult').innerHTML = `<div class="text-center"><p class="text-xs text-slate-500 font-bold uppercase mb-1">Total Sales</p><h2 class="text-3xl font-black text-green-700 mb-2">Rs. ${totalSales.toFixed(2)}</h2><p class="text-sm font-bold text-slate-700">Valid Orders: ${filtered.filter(o=>o.status!=='Cancelled').length}</p></div>`; }
+        function populateReportCategories() { let cats = JSON.parse(localStorage.getItem('jsuper_cats')) || []; document.getElementById('repInvCat').innerHTML = '<option value="all">All Categories</option>' + cats.map(c => `<option value="${c.name}">${c.name}</option>`).join(''); }
+        function generateInventoryReport() { const cat = document.getElementById('repInvCat').value; const inv = JSON.parse(localStorage.getItem('jsuper_products')) || []; let filtered = cat === 'all' ? inv : inv.filter(i => i.category === cat); let html = '<table class="w-full text-left text-xs"><tr class="border-b"><th class="pb-2">Item</th><th class="pb-2 text-right">Price</th></tr>'; filtered.forEach(i => { html += `<tr class="border-b border-slate-100 last:border-0"><td class="py-2">${i.name}</td><td class="py-2 text-right text-green-700 font-bold">Rs. ${parseFloat(i.price).toFixed(2)}</td></tr>`; }); html += '</table>'; document.getElementById('invReportResult').innerHTML = html; }
 
-        // ================= ADS & DIRECTORS =================
-        function loadAds() {
-            const ads = JSON.parse(localStorage.getItem('jsuper_ads')) || [];
-            document.getElementById('adsGrid').innerHTML = ads.map(a => `<div class="relative rounded-xl overflow-hidden shadow border"><img src="${a.img}" class="w-full h-32 object-cover"><button onclick="delAd(${a.id})" class="absolute top-2 right-2 bg-red-600 text-white w-8 h-8 rounded-full shadow-lg"><i class="fa-solid fa-trash"></i></button></div>`).join('');
-        }
+        // Ads & Directors
+        function loadAds() { const ads = JSON.parse(localStorage.getItem('jsuper_ads')) || []; document.getElementById('adsGrid').innerHTML = ads.map(a => `<div class="relative rounded-xl overflow-hidden shadow border"><img src="${a.img}" class="w-full h-32 object-cover"><button onclick="delAd(${a.id})" class="absolute top-2 right-2 bg-red-600 text-white w-8 h-8 rounded-full shadow-lg"><i class="fa-solid fa-trash"></i></button></div>`).join(''); }
         function saveAd(e) { e.preventDefault(); let list = JSON.parse(localStorage.getItem('jsuper_ads')) || []; list.push({ id: Date.now(), img: document.getElementById('adImgB64').value }); localStorage.setItem('jsuper_ads', JSON.stringify(list)); closeModal('adModal'); loadAds(); }
         function delAd(id) { let list = JSON.parse(localStorage.getItem('jsuper_ads')); localStorage.setItem('jsuper_ads', JSON.stringify(list.filter(a => a.id !== id))); loadAds(); }
-
-        function loadDirectors() {
-            const dirs = JSON.parse(localStorage.getItem('jsuper_directors')) || [];
-            document.getElementById('adminDirGrid').innerHTML = dirs.map(d => `<div class="bg-white p-4 rounded-xl text-center shadow-sm border relative"><img src="${d.img}" class="w-16 h-16 rounded-full mx-auto object-cover mb-2 border"><h5 class="font-black text-sm">${d.name}</h5><p class="text-[10px] text-teal-600 font-bold">${d.role}</p><button onclick="delDir(${d.id})" class="absolute top-2 right-2 text-red-500"><i class="fa-solid fa-trash"></i></button></div>`).join('');
-        }
+        function loadDirectors() { const dirs = JSON.parse(localStorage.getItem('jsuper_directors')) || []; document.getElementById('adminDirGrid').innerHTML = dirs.map(d => `<div class="bg-white p-4 rounded-xl text-center shadow-sm border relative"><img src="${d.img}" class="w-16 h-16 rounded-full mx-auto object-cover mb-2 border"><h5 class="font-black text-sm">${d.name}</h5><p class="text-[10px] text-teal-600 font-bold">${d.role}</p><button onclick="delDir(${d.id})" class="absolute top-2 right-2 text-red-500"><i class="fa-solid fa-trash"></i></button></div>`).join(''); }
         function saveDirector(e) { e.preventDefault(); let list = JSON.parse(localStorage.getItem('jsuper_directors')) || []; list.push({ id: Date.now(), name: document.getElementById('dName').value, role: document.getElementById('dRole').value, img: document.getElementById('dImgB64').value }); localStorage.setItem('jsuper_directors', JSON.stringify(list)); closeModal('dirModal'); loadDirectors(); }
         function delDir(id) { let list = JSON.parse(localStorage.getItem('jsuper_directors')); localStorage.setItem('jsuper_directors', JSON.stringify(list.filter(d => d.id !== id))); loadDirectors(); }
 
-        // ================= AUTHENTICATION & STAFF SYSTEM =================
+        // Auth
         function initAuth() {
-            // 1. Create default Super Admin if not exists
             let users = JSON.parse(localStorage.getItem('jsuper_users'));
-            if (!users) {
-                users = [{
-                    id: 1,
-                    username: 'admin',
-                    password: '1234',
-                    role: 'Super Admin',
-                    isSuper: true,
-                    permissions: ['orders', 'inventory', 'pos', 'ads'] // Full access
-                }];
-                localStorage.setItem('jsuper_users', JSON.stringify(users));
-            }
-
-            // 2. Check login state
+            if (!users) { users = [{ id: 1, username: 'admin', password: '1234', role: 'Super Admin', isSuper: true, permissions: ['orders', 'inventory', 'pos', 'ads'] }]; localStorage.setItem('jsuper_users', JSON.stringify(users)); }
             const activeUser = JSON.parse(sessionStorage.getItem('jsuper_active_user'));
-            
-            if (activeUser) {
-                // Logged in
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('mainAdminContent').style.display = 'flex';
-                
-                applyPermissions(activeUser);
-                
-                if(activeUser.isSuper) {
-                    document.getElementById('nav-staff').style.display = 'flex';
-                    loadStaffUsers();
-                }
-            } else {
-                // Not logged in
-                document.getElementById('loginScreen').style.display = 'flex';
-                document.getElementById('mainAdminContent').style.display = 'none';
-            }
+            if (activeUser) { document.getElementById('loginScreen').style.display = 'none'; document.getElementById('mainAdminContent').style.display = 'flex'; applyPermissions(activeUser); if(activeUser.isSuper) { document.getElementById('nav-staff').style.display = 'flex'; loadStaffUsers(); } } else { document.getElementById('loginScreen').style.display = 'flex'; document.getElementById('mainAdminContent').style.display = 'none'; }
         }
-
-        function handleLogin(e) {
-            e.preventDefault();
-            const userVal = document.getElementById('loginUser').value;
-            const passVal = document.getElementById('loginPass').value;
-            const users = JSON.parse(localStorage.getItem('jsuper_users')) || [];
-            
-            const user = users.find(u => u.username === userVal && u.password === passVal);
-            
-            if (user) {
-                sessionStorage.setItem('jsuper_active_user', JSON.stringify(user));
-                window.location.reload(); 
-            } else {
-                document.getElementById('loginError').classList.remove('hidden');
-            }
-        }
-
-        function handleLogout() {
-            sessionStorage.removeItem('jsuper_active_user');
-            window.location.reload();
-        }
-
-        function applyPermissions(user) {
-            if (user.isSuper) return; // Super admin sees everything
-
-            const sidebarLinks = document.querySelectorAll('aside nav button');
-            
-            sidebarLinks.forEach(link => {
-                const text = link.innerText.toLowerCase();
-                let hasAccess = false;
-
-                if (user.permissions.includes('orders') && text.includes('order')) hasAccess = true;
-                if (user.permissions.includes('inventory') && (text.includes('inventory') || text.includes('categor'))) hasAccess = true;
-                if (user.permissions.includes('pos') && (text.includes('pos') || text.includes('report'))) hasAccess = true;
-                if (user.permissions.includes('ads') && (text.includes('ad') || text.includes('banner'))) hasAccess = true;
-                
-                // Always show these
-                if (text.includes('settings') || text.includes('director')) hasAccess = true; 
-
-                if (!hasAccess && link.id !== 'nav-staff') {
-                    link.style.display = 'none';
-                }
-            });
-        }
-
-        function addStaffUser(e) {
-            e.preventDefault();
-            const username = document.getElementById('staffUsername').value;
-            const pass = document.getElementById('staffPassword').value;
-            const role = document.getElementById('staffRole').value;
-            
-            let permissions = [];
-            if(document.getElementById('permOrders').checked) permissions.push('orders');
-            if(document.getElementById('permInventory').checked) permissions.push('inventory');
-            if(document.getElementById('permPos').checked) permissions.push('pos');
-            if(document.getElementById('permAds').checked) permissions.push('ads');
-
-            let users = JSON.parse(localStorage.getItem('jsuper_users')) || [];
-            
-            if(users.some(u => u.username === username)) {
-                alert("Username already exists!");
-                return;
-            }
-
-            users.push({
-                id: Date.now(),
-                username: username,
-                password: pass,
-                role: role,
-                isSuper: false,
-                permissions: permissions
-            });
-
-            localStorage.setItem('jsuper_users', JSON.stringify(users));
-            alert("User added successfully!");
-            e.target.reset();
-            loadStaffUsers();
-        }
-
-        function loadStaffUsers() {
-            let users = JSON.parse(localStorage.getItem('jsuper_users')) || [];
-            const staffList = document.getElementById('staffList');
-            staffList.innerHTML = '';
-
-            users.forEach(u => {
-                if(u.isSuper) return; 
-                
-                staffList.innerHTML += `
-                    <div class="flex justify-between items-center bg-slate-50 p-3 rounded-lg border">
-                        <div>
-                            <h4 class="font-bold text-sm text-slate-800">${u.username} <span class="text-[10px] bg-teal-100 text-teal-800 px-2 py-0.5 rounded-full ml-2">${u.role}</span></h4>
-                            <p class="text-[10px] text-slate-500 mt-1">Access: ${u.permissions.join(', ') || 'None'}</p>
-                        </div>
-                        <button onclick="deleteStaffUser(${u.id})" class="text-red-500 hover:bg-red-100 p-2 rounded-full transition">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                `;
-            });
-        }
-
-        function deleteStaffUser(id) {
-            if(confirm("Are you sure you want to delete this user?")) {
-                let users = JSON.parse(localStorage.getItem('jsuper_users')) || [];
-                users = users.filter(u => u.id !== id);
-                localStorage.setItem('jsuper_users', JSON.stringify(users));
-                loadStaffUsers();
-            }
-        }
-
-        function changeAdminPassword(e) {
-            e.preventDefault();
-            const newPass = document.getElementById('newAdminPassword').value;
-            let users = JSON.parse(localStorage.getItem('jsuper_users')) || [];
-            
-            let adminIndex = users.findIndex(u => u.isSuper === true);
-            if(adminIndex > -1) {
-                users[adminIndex].password = newPass;
-                localStorage.setItem('jsuper_users', JSON.stringify(users));
-                
-                const activeUser = JSON.parse(sessionStorage.getItem('jsuper_active_user'));
-                activeUser.password = newPass;
-                sessionStorage.setItem('jsuper_active_user', JSON.stringify(activeUser));
-                
-                alert("Super Admin password updated successfully!");
-                e.target.reset();
-            }
-        }
+        function handleLogin(e) { e.preventDefault(); const userVal = document.getElementById('loginUser').value; const passVal = document.getElementById('loginPass').value; const users = JSON.parse(localStorage.getItem('jsuper_users')) || []; const user = users.find(u => u.username === userVal && u.password === passVal); if (user) { sessionStorage.setItem('jsuper_active_user', JSON.stringify(user)); window.location.reload(); } else { document.getElementById('loginError').classList.remove('hidden'); } }
+        function handleLogout() { sessionStorage.removeItem('jsuper_active_user'); window.location.reload(); }
+        function applyPermissions(user) { if (user.isSuper) return; const sidebarLinks = document.querySelectorAll('aside nav button'); sidebarLinks.forEach(link => { const text = link.innerText.toLowerCase(); let hasAccess = false; if (user.permissions.includes('orders') && text.includes('order')) hasAccess = true; if (user.permissions.includes('inventory') && (text.includes('inventory') || text.includes('categor'))) hasAccess = true; if (user.permissions.includes('pos') && (text.includes('pos') || text.includes('report'))) hasAccess = true; if (user.permissions.includes('ads') && (text.includes('ad') || text.includes('banner'))) hasAccess = true; if (text.includes('settings') || text.includes('director')) hasAccess = true; if (!hasAccess && link.id !== 'nav-staff') { link.style.display = 'none'; } }); }
+        function addStaffUser(e) { e.preventDefault(); const username = document.getElementById('staffUsername').value; const pass = document.getElementById('staffPassword').value; const role = document.getElementById('staffRole').value; let permissions = []; if(document.getElementById('permOrders').checked) permissions.push('orders'); if(document.getElementById('permInventory').checked) permissions.push('inventory'); if(document.getElementById('permPos').checked) permissions.push('pos'); if(document.getElementById('permAds').checked) permissions.push('ads'); let users = JSON.parse(localStorage.getItem('jsuper_users')) || []; if(users.some(u => u.username === username)) { alert("Username already exists!"); return; } users.push({ id: Date.now(), username: username, password: pass, role: role, isSuper: false, permissions: permissions }); localStorage.setItem('jsuper_users', JSON.stringify(users)); alert("User added successfully!"); e.target.reset(); loadStaffUsers(); }
+        function loadStaffUsers() { let users = JSON.parse(localStorage.getItem('jsuper_users')) || []; const staffList = document.getElementById('staffList'); staffList.innerHTML = ''; users.forEach(u => { if(u.isSuper) return; staffList.innerHTML += `<div class="flex justify-between items-center bg-slate-50 p-3 rounded-lg border"><div><h4 class="font-bold text-sm text-slate-800">${u.username} <span class="text-[10px] bg-teal-100 text-teal-800 px-2 py-0.5 rounded-full ml-2">${u.role}</span></h4><p class="text-[10px] text-slate-500 mt-1">Access: ${u.permissions.join(', ') || 'None'}</p></div><button onclick="deleteStaffUser(${u.id})" class="text-red-500 hover:bg-red-100 p-2 rounded-full transition"><i class="fa-solid fa-trash"></i></button></div>`; }); }
+        function deleteStaffUser(id) { if(confirm("Are you sure you want to delete this user?")) { let users = JSON.parse(localStorage.getItem('jsuper_users')) || []; users = users.filter(u => u.id !== id); localStorage.setItem('jsuper_users', JSON.stringify(users)); loadStaffUsers(); } }
+        function changeAdminPassword(e) { e.preventDefault(); const newPass = document.getElementById('newAdminPassword').value; let users = JSON.parse(localStorage.getItem('jsuper_users')) || []; let adminIndex = users.findIndex(u => u.isSuper === true); if(adminIndex > -1) { users[adminIndex].password = newPass; localStorage.setItem('jsuper_users', JSON.stringify(users)); const activeUser = JSON.parse(sessionStorage.getItem('jsuper_active_user')); activeUser.password = newPass; sessionStorage.setItem('jsuper_active_user', JSON.stringify(activeUser)); alert("Super Admin password updated successfully!"); e.target.reset(); } }
     </script>
 </body>
 </html>
