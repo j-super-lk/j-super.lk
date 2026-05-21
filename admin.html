@@ -86,7 +86,7 @@
     </main>
 
     <script>
-        // --- 1. AUTH LOGIC ---
+    
         const defaultAdmin = { username: "admin", pass: "1234", role: "superadmin", permissions: ["orders", "inventory", "reports", "ads", "staff"] };
         
         function checkAuth() {
@@ -134,8 +134,6 @@
             localStorage.setItem('jsuper_users', JSON.stringify(users));
             alert("සාර්ථකයි!");
         }
-
-        // --- 2. ORIGINAL DASHBOARD LOGIC (පැරණි ෆන්ක්ෂන්ස්) ---
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
