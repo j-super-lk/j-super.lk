@@ -21,187 +21,255 @@
 </head>
 <body class="bg-slate-100 text-slate-800 h-screen flex overflow-hidden">
 
-    <!-- Sidebar -->
-    <aside class="w-64 bg-slate-900 text-white flex flex-col h-full shadow-2xl z-20 hidden md:flex shrink-0">
-        <div class="p-6 border-b border-slate-800 text-center">
-            <h1 class="text-2xl font-black text-green-400 uppercase tracking-widest border-2 border-green-500 rounded-lg p-2 bg-slate-800">Admin</h1>
-            <p class="text-[10px] text-slate-400 mt-2 uppercase tracking-widest">J SUPER.LK Manager</p>
+    <div id="loginScreen" class="min-h-screen bg-slate-100 flex items-center justify-center absolute inset-0 z-50">
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-96 max-w-full">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-black text-slate-800">J SUPER.LK</h2>
+                <p class="text-sm text-slate-500">Admin Login</p>
+            </div>
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Username</label>
+                    <input type="text" id="loginUser" class="w-full border border-slate-300 rounded-lg p-2.5 outline-none focus:border-teal-500" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Password</label>
+                    <input type="password" id="loginPass" class="w-full border border-slate-300 rounded-lg p-2.5 outline-none focus:border-teal-500" required>
+                </div>
+                <p id="loginError" class="text-red-500 text-xs hidden font-bold">Invalid Username or Password!</p>
+                <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg transition">Login</button>
+            </form>
         </div>
-        <nav class="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
-            <button onclick="switchTab('ordersTab')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition font-bold text-sm flex items-center justify-between group active-btn">
-                <span class="flex items-center gap-3"><i class="fa-solid fa-bell text-yellow-400"></i> Live Orders</span>
-                <span id="orderBadge" class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full hidden">0</span>
-            </button>
-            <button onclick="switchTab('reportsTab')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition font-bold text-sm flex items-center gap-3"><i class="fa-solid fa-chart-pie text-blue-400"></i> POS & Reports</button>
-            <button onclick="switchTab('productsTab')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition font-bold text-sm flex items-center gap-3"><i class="fa-solid fa-box text-green-400"></i> Inventory</button>
-            <button onclick="switchTab('catsTab')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition font-bold text-sm flex items-center gap-3"><i class="fa-solid fa-tags text-pink-400"></i> Categories</button>
-            <button onclick="switchTab('adsTab')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition font-bold text-sm flex items-center gap-3"><i class="fa-solid fa-image text-purple-400"></i> Banners / Ads</button>
-            <button onclick="switchTab('settingsTab')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition font-bold text-sm flex items-center gap-3"><i class="fa-solid fa-gear text-orange-400"></i> Web Settings</button>
-            <button onclick="switchTab('directorsTab')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition font-bold text-sm flex items-center gap-3"><i class="fa-solid fa-users text-teal-400"></i> Directors Board</button>
-        </nav>
-        <div class="p-4 border-t border-slate-800">
-            <a href="index.html" class="w-full block text-center bg-green-600 hover:bg-green-700 text-white font-black py-3 rounded-xl transition shadow-lg"><i class="fa-solid fa-globe mr-2"></i> VIEW SITE</a>
-        </div>
-    </aside>
+    </div>
 
-    <!-- Main Content -->
-    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
-        <header class="bg-white shadow-sm p-4 flex justify-between items-center z-10 border-b border-slate-200">
-            <h2 class="text-xl font-black text-slate-800" id="topTitle">Live Orders</h2>
-            
-            <div class="flex items-center gap-4">
-                <input type="file" id="customSoundInput" accept="audio/*" class="text-[10px] w-48 hidden" onchange="changeNotifSound(this)">
-                <button onclick="document.getElementById('customSoundInput').click()" class="text-[10px] bg-slate-100 px-3 py-2 rounded-lg font-bold hover:bg-slate-200">Change Sound</button>
-                <button id="enableSoundBtn" onclick="enableAudioContext()" class="bg-red-100 text-red-600 px-4 py-2 rounded-lg text-xs font-bold border border-red-200 blink-me"><i class="fa-solid fa-volume-up mr-1"></i> Enable Sound</button>
+    <div id="mainAdminContent" style="display: none;" class="w-full h-full flex overflow-hidden">
+        
+        <aside class="w-64 bg-slate-900 text-white flex flex-col h-full shadow-2xl z-20 hidden md:flex shrink-0">
+            <div class="p-6 border-b border-slate-800 text-center">
+                <h1 class="text-2xl font-black text-green-400 uppercase tracking-widest border-2 border-green-500 rounded-lg p-2 bg-slate-800">Admin</h1>
+                <p class="text-[10px] text-slate-400 mt-2 uppercase tracking-widest">J SUPER.LK Manager</p>
             </div>
-        </header>
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
+                <button onclick="switchTab('ordersTab')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition font-bold text-sm flex items-center justify-between group active-btn">
+                    <span class="flex items-center gap-3"><i class="fa-solid fa-bell text-yellow-400"></i> Live Orders</span>
+                    <span id="orderBadge" class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full hidden">0</span>
+                </button>
+                <button onclick="switchTab('reportsTab')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition font-bold text-sm flex items-center gap-3"><i class="fa-solid fa-chart-pie text-blue-400"></i> POS & Reports</button>
+                <button onclick="switchTab('productsTab')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition font-bold text-sm flex items-center gap-3"><i class="fa-solid fa-box text-green-400"></i> Inventory</button>
+                <button onclick="switchTab('catsTab')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition font-bold text-sm flex items-center gap-3"><i class="fa-solid fa-tags text-pink-400"></i> Categories</button>
+                <button onclick="switchTab('adsTab')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition font-bold text-sm flex items-center gap-3"><i class="fa-solid fa-image text-purple-400"></i> Banners / Ads</button>
+                <button onclick="switchTab('settingsTab')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition font-bold text-sm flex items-center gap-3"><i class="fa-solid fa-gear text-orange-400"></i> Web Settings</button>
+                <button onclick="switchTab('directorsTab')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition font-bold text-sm flex items-center gap-3"><i class="fa-solid fa-users text-teal-400"></i> Directors Board</button>
+                
+                <button id="nav-staff" onclick="switchTab('staffTab')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition font-bold text-sm flex items-center gap-3" style="display: none;">
+                    <i class="fa-solid fa-users-gear text-slate-400"></i> Staff Management
+                </button>
+            </nav>
+            <div class="p-4 border-t border-slate-800">
+                <a href="index.html" class="w-full block text-center bg-green-600 hover:bg-green-700 text-white font-black py-3 rounded-xl transition shadow-lg"><i class="fa-solid fa-globe mr-2"></i> VIEW SITE</a>
+            </div>
+        </aside>
 
-        <div class="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50 custom-scrollbar relative">
-            
-            <!-- LIVE ORDERS TAB -->
-            <div id="ordersTab" class="tab-content active max-w-5xl mx-auto">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="p-4 bg-slate-800 text-white flex justify-between items-center">
-                        <h4 class="font-bold"><i class="fa-solid fa-list mr-2"></i> Recent Orders</h4>
-                        <button onclick="clearOrders()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-bold transition">Clear All</button>
-                    </div>
-                    <div id="ordersContainer" class="divide-y divide-slate-100 max-h-[70vh] overflow-y-auto custom-scrollbar"></div>
+        <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+            <header class="bg-white shadow-sm p-4 flex justify-between items-center z-10 border-b border-slate-200">
+                <h2 class="text-xl font-black text-slate-800" id="topTitle">Live Orders</h2>
+                
+                <div class="flex items-center gap-4">
+                    <input type="file" id="customSoundInput" accept="audio/*" class="text-[10px] w-48 hidden" onchange="changeNotifSound(this)">
+                    <button onclick="document.getElementById('customSoundInput').click()" class="text-[10px] bg-slate-100 px-3 py-2 rounded-lg font-bold hover:bg-slate-200">Change Sound</button>
+                    <button id="enableSoundBtn" onclick="enableAudioContext()" class="bg-red-100 text-red-600 px-4 py-2 rounded-lg text-xs font-bold border border-red-200 blink-me"><i class="fa-solid fa-volume-up mr-1"></i> Enable Sound</button>
+                    <button onclick="handleLogout()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-900 transition flex items-center">
+                        <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
+                    </button>
                 </div>
-            </div>
-            
-            <!-- REPORTS TAB -->
-            <div id="reportsTab" class="tab-content max-w-5xl mx-auto">
-                <h3 class="text-2xl font-black text-slate-800 mb-6">POS & Reports</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border">
-                        <h4 class="font-bold text-green-800 mb-4 border-b pb-2">Sales Report</h4>
-                        <div class="flex gap-2 mb-4">
-                            <input type="date" id="repStart" class="border p-2 rounded text-sm w-full bg-slate-50">
-                            <input type="date" id="repEnd" class="border p-2 rounded text-sm w-full bg-slate-50">
-                            <button onclick="generateSalesReport()" class="bg-green-600 text-white px-4 py-2 rounded font-bold text-sm">Run</button>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50 custom-scrollbar relative">
+                
+                <div id="ordersTab" class="tab-content active max-w-5xl mx-auto">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="p-4 bg-slate-800 text-white flex justify-between items-center">
+                            <h4 class="font-bold"><i class="fa-solid fa-list mr-2"></i> Recent Orders</h4>
+                            <button onclick="clearOrders()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-bold transition">Clear All</button>
                         </div>
-                        <div id="salesReportResult" class="bg-slate-50 p-4 rounded-xl min-h-[100px] border"></div>
+                        <div id="ordersContainer" class="divide-y divide-slate-100 max-h-[70vh] overflow-y-auto custom-scrollbar"></div>
                     </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border">
-                        <h4 class="font-bold text-orange-800 mb-4 border-b pb-2">Inventory Report</h4>
-                        <div class="flex gap-2 mb-4">
-                            <select id="repInvCat" class="border p-2 rounded text-sm w-full bg-slate-50">
-                                <option value="all">All Categories</option>
-                            </select>
-                            <button onclick="generateInventoryReport()" class="bg-orange-500 text-white px-4 py-2 rounded font-bold text-sm">Run</button>
+                </div>
+                
+                <div id="reportsTab" class="tab-content max-w-5xl mx-auto">
+                    <h3 class="text-2xl font-black text-slate-800 mb-6">POS & Reports</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border">
+                            <h4 class="font-bold text-green-800 mb-4 border-b pb-2">Sales Report</h4>
+                            <div class="flex gap-2 mb-4">
+                                <input type="date" id="repStart" class="border p-2 rounded text-sm w-full bg-slate-50">
+                                <input type="date" id="repEnd" class="border p-2 rounded text-sm w-full bg-slate-50">
+                                <button onclick="generateSalesReport()" class="bg-green-600 text-white px-4 py-2 rounded font-bold text-sm">Run</button>
+                            </div>
+                            <div id="salesReportResult" class="bg-slate-50 p-4 rounded-xl min-h-[100px] border"></div>
                         </div>
-                        <div id="invReportResult" class="bg-slate-50 p-4 rounded-xl max-h-64 overflow-y-auto custom-scrollbar border"></div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border">
+                            <h4 class="font-bold text-orange-800 mb-4 border-b pb-2">Inventory Report</h4>
+                            <div class="flex gap-2 mb-4">
+                                <select id="repInvCat" class="border p-2 rounded text-sm w-full bg-slate-50">
+                                    <option value="all">All Categories</option>
+                                </select>
+                                <button onclick="generateInventoryReport()" class="bg-orange-500 text-white px-4 py-2 rounded font-bold text-sm">Run</button>
+                            </div>
+                            <div id="invReportResult" class="bg-slate-50 p-4 rounded-xl max-h-64 overflow-y-auto custom-scrollbar border"></div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- INVENTORY TAB -->
-            <div id="productsTab" class="tab-content max-w-6xl mx-auto">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-2xl font-black text-slate-800">Inventory <span class="bg-slate-200 text-slate-600 px-3 py-1 rounded-full text-sm ml-2 font-bold shadow-inner" id="prodCount">0</span></h3>
-                    <button onclick="openProductModal()" class="bg-green-600 text-white px-6 py-3 rounded-xl font-black hover:bg-green-700 shadow-lg transition transform hover:-translate-y-1"><i class="fa-solid fa-plus mr-2"></i> Add Item</button>
-                </div>
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm whitespace-nowrap">
-                            <thead class="bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-wider">
-                                <tr>
-                                    <th class="p-4">Image</th>
-                                    <th class="p-4">Name & Desc</th>
-                                    <th class="p-4">Category</th>
-                                    <th class="p-4">Type</th>
-                                    <th class="p-4">Price / Discount</th>
-                                    <th class="p-4 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="adminProductTable" class="divide-y divide-slate-100"></tbody>
-                        </table>
+                <div id="productsTab" class="tab-content max-w-6xl mx-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-black text-slate-800">Inventory <span class="bg-slate-200 text-slate-600 px-3 py-1 rounded-full text-sm ml-2 font-bold shadow-inner" id="prodCount">0</span></h3>
+                        <button onclick="openProductModal()" class="bg-green-600 text-white px-6 py-3 rounded-xl font-black hover:bg-green-700 shadow-lg transition transform hover:-translate-y-1"><i class="fa-solid fa-plus mr-2"></i> Add Item</button>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm whitespace-nowrap">
+                                <thead class="bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-wider">
+                                    <tr>
+                                        <th class="p-4">Image</th>
+                                        <th class="p-4">Name & Desc</th>
+                                        <th class="p-4">Category</th>
+                                        <th class="p-4">Type</th>
+                                        <th class="p-4">Price / Discount</th>
+                                        <th class="p-4 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminProductTable" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- CATEGORIES TAB -->
-            <div id="catsTab" class="tab-content max-w-4xl mx-auto">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-2xl font-black text-slate-800">Categories & Subcategories</h3>
-                    <button onclick="addCategory()" class="bg-pink-600 text-white px-6 py-3 rounded-xl font-black hover:bg-pink-700 shadow-lg transition"><i class="fa-solid fa-plus mr-2"></i> New Category</button>
+                
+                <div id="catsTab" class="tab-content max-w-4xl mx-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-black text-slate-800">Categories & Subcategories</h3>
+                        <button onclick="addCategory()" class="bg-pink-600 text-white px-6 py-3 rounded-xl font-black hover:bg-pink-700 shadow-lg transition"><i class="fa-solid fa-plus mr-2"></i> New Category</button>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" id="adminCatList"></div>
                 </div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" id="adminCatList"></div>
-            </div>
 
-            <!-- ADS TAB -->
-            <div id="adsTab" class="tab-content max-w-4xl mx-auto">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-2xl font-black text-slate-800">Banner Ads</h3>
-                    <button onclick="document.getElementById('adModal').classList.remove('hidden')" class="bg-purple-600 text-white px-6 py-3 rounded-xl font-black hover:bg-purple-700 shadow-lg transition"><i class="fa-solid fa-upload mr-2"></i> Upload Banner</button>
+                <div id="adsTab" class="tab-content max-w-4xl mx-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-black text-slate-800">Banner Ads</h3>
+                        <button onclick="document.getElementById('adModal').classList.remove('hidden')" class="bg-purple-600 text-white px-6 py-3 rounded-xl font-black hover:bg-purple-700 shadow-lg transition"><i class="fa-solid fa-upload mr-2"></i> Upload Banner</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="adsGrid"></div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="adsGrid"></div>
-            </div>
 
-            <!-- WEB SETTINGS TAB -->
-            <div id="settingsTab" class="tab-content max-w-4xl mx-auto pb-20">
-                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-full h-2 bg-orange-500"></div>
-                    <h3 class="text-2xl font-black text-slate-800 mb-8"><i class="fa-solid fa-gear text-orange-500 mr-2"></i> Web & Payment Settings</h3>
+                <div id="settingsTab" class="tab-content max-w-4xl mx-auto pb-20">
+                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-2 bg-orange-500"></div>
+                        <h3 class="text-2xl font-black text-slate-800 mb-8"><i class="fa-solid fa-gear text-orange-500 mr-2"></i> Web & Payment Settings</h3>
+                        
+                        <form id="settingsForm" onsubmit="saveWebSettings(event)" class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="font-black text-slate-700 text-sm mb-2 block">Admin WhatsApp (For Orders)</label>
+                                    <input type="text" id="setWaAdmin" class="w-full border p-3 rounded-lg focus:outline-none focus:border-green-500 bg-slate-50" required>
+                                </div>
+                                <div>
+                                    <label class="font-black text-slate-700 text-sm mb-2 block">Top Nav Links (Comma Sep)</label>
+                                    <input type="text" id="setNavLinks" class="w-full border p-3 rounded-lg focus:outline-none focus:border-green-500 bg-slate-50" required>
+                                </div>
+                            </div>
+
+                            <div class="border-t border-slate-200 pt-6">
+                                <h4 class="font-black text-lg mb-4 text-slate-700">Payment Setup</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div><label class="text-xs font-bold">Bank Details</label><textarea id="setBank" class="w-full border p-2 rounded text-xs" rows="3"></textarea></div>
+                                    <div><label class="text-xs font-bold">PayPal Email</label><input type="text" id="setPaypal" class="w-full border p-2 rounded text-xs"></div>
+                                    <div><label class="text-xs font-bold">Crypto (Binance)</label><textarea id="setCrypto" class="w-full border p-2 rounded text-xs" rows="3"></textarea></div>
+                                </div>
+                            </div>
+
+                            <div class="border-t border-slate-200 pt-6">
+                                <h4 class="font-black text-lg mb-4 text-slate-700">Footer Text Pages</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div><label class="text-xs font-bold">About Us</label><textarea id="setAbout" class="w-full border p-2 rounded text-xs" rows="3"></textarea></div>
+                                    <div><label class="text-xs font-bold">FAQ</label><textarea id="setFaq" class="w-full border p-2 rounded text-xs" rows="3"></textarea></div>
+                                    <div><label class="text-xs font-bold">Privacy Notice</label><textarea id="setPrivacy" class="w-full border p-2 rounded text-xs" rows="3"></textarea></div>
+                                    <div><label class="text-xs font-bold">Terms & Conditions</label><textarea id="setTerms" class="w-full border p-2 rounded text-xs" rows="3"></textarea></div>
+                                    <div class="col-span-1 md:col-span-2"><label class="text-xs font-bold">Delivery Grid</label><textarea id="setDelivery" class="w-full border p-2 rounded text-xs" rows="2"></textarea></div>
+                                </div>
+                            </div>
+                            
+                            <div class="border-t border-slate-200 pt-6">
+                                <h4 class="font-black text-lg mb-4 text-slate-700">Company Details</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div><label class="text-xs font-bold">Address</label><textarea id="setAddress" class="w-full border p-2 rounded text-xs" rows="2"></textarea></div>
+                                    <div><label class="text-xs font-bold">Phones</label><textarea id="setPhones" class="w-full border p-2 rounded text-xs" rows="2"></textarea></div>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="w-full bg-slate-900 text-white font-black py-4 rounded-xl hover:bg-slate-800 transition shadow-xl text-lg"><i class="fa-solid fa-save mr-2"></i> Save All Settings</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="directorsTab" class="tab-content max-w-5xl mx-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-black text-slate-800">Board of Directors</h3>
+                        <button onclick="document.getElementById('dirModal').classList.remove('hidden')" class="bg-teal-600 text-white px-6 py-3 rounded-xl font-black hover:bg-teal-700 shadow-lg transition"><i class="fa-solid fa-plus mr-2"></i> Add Director</button>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6" id="adminDirGrid"></div>
+                </div>
+
+                <div id="staffTab" class="tab-content max-w-5xl mx-auto">
+                    <h2 class="text-2xl font-black mb-6 text-slate-800">Staff Management (Super Admin Only)</h2>
                     
-                    <form id="settingsForm" onsubmit="saveWebSettings(event)" class="space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="font-black text-slate-700 text-sm mb-2 block">Admin WhatsApp (For Orders)</label>
-                                <input type="text" id="setWaAdmin" class="w-full border p-3 rounded-lg focus:outline-none focus:border-green-500 bg-slate-50" required>
-                            </div>
-                            <div>
-                                <label class="font-black text-slate-700 text-sm mb-2 block">Top Nav Links (Comma Sep)</label>
-                                <input type="text" id="setNavLinks" class="w-full border p-3 rounded-lg focus:outline-none focus:border-green-500 bg-slate-50" required>
-                            </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                            <h3 class="font-bold text-slate-700 mb-4 border-b pb-2"><i class="fa-solid fa-user-plus mr-2"></i>Add New Staff</h3>
+                            <form onsubmit="addStaffUser(event)" class="space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <input type="text" id="staffUsername" placeholder="Username" class="border p-2 rounded-lg w-full text-sm outline-none focus:border-teal-500" required>
+                                    <input type="password" id="staffPassword" placeholder="Password" class="border p-2 rounded-lg w-full text-sm outline-none focus:border-teal-500" required>
+                                </div>
+                                <select id="staffRole" class="border p-2 rounded-lg w-full text-sm outline-none focus:border-teal-500">
+                                    <option value="Cashier">Cashier</option>
+                                    <option value="Manager">Manager</option>
+                                </select>
+                                
+                                <div class="bg-slate-50 p-3 rounded-lg border">
+                                    <p class="text-xs font-bold mb-2 text-slate-600">Select Permissions:</p>
+                                    <div class="grid grid-cols-2 gap-2 text-sm text-slate-700">
+                                        <label class="flex items-center space-x-2"><input type="checkbox" id="permOrders" value="orders" class="accent-teal-600"> <span>Manage Orders</span></label>
+                                        <label class="flex items-center space-x-2"><input type="checkbox" id="permInventory" value="inventory" class="accent-teal-600"> <span>Inventory & Cats</span></label>
+                                        <label class="flex items-center space-x-2"><input type="checkbox" id="permPos" value="pos" class="accent-teal-600"> <span>POS & Reports</span></label>
+                                        <label class="flex items-center space-x-2"><input type="checkbox" id="permAds" value="ads" class="accent-teal-600"> <span>Banner Ads</span></label>
+                                    </div>
+                                </div>
+                                <button type="submit" class="w-full bg-teal-600 text-white font-bold py-2 rounded-lg hover:bg-teal-700 text-sm">Create User</button>
+                            </form>
                         </div>
 
-                        <div class="border-t border-slate-200 pt-6">
-                            <h4 class="font-black text-lg mb-4 text-slate-700">Payment Setup</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div><label class="text-xs font-bold">Bank Details</label><textarea id="setBank" class="w-full border p-2 rounded text-xs" rows="3"></textarea></div>
-                                <div><label class="text-xs font-bold">PayPal Email</label><input type="text" id="setPaypal" class="w-full border p-2 rounded text-xs"></div>
-                                <div><label class="text-xs font-bold">Crypto (Binance)</label><textarea id="setCrypto" class="w-full border p-2 rounded text-xs" rows="3"></textarea></div>
+                        <div class="space-y-6">
+                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                                <h3 class="font-bold text-slate-700 mb-4 border-b pb-2"><i class="fa-solid fa-key mr-2"></i>Change My Password</h3>
+                                <form onsubmit="changeAdminPassword(event)" class="flex space-x-2">
+                                    <input type="password" id="newAdminPassword" placeholder="Enter New Password" class="border p-2 rounded-lg w-full text-sm outline-none focus:border-teal-500" required>
+                                    <button type="submit" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-slate-900 whitespace-nowrap">Update</button>
+                                </form>
                             </div>
-                        </div>
 
-                        <div class="border-t border-slate-200 pt-6">
-                            <h4 class="font-black text-lg mb-4 text-slate-700">Footer Text Pages</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><label class="text-xs font-bold">About Us</label><textarea id="setAbout" class="w-full border p-2 rounded text-xs" rows="3"></textarea></div>
-                                <div><label class="text-xs font-bold">FAQ</label><textarea id="setFaq" class="w-full border p-2 rounded text-xs" rows="3"></textarea></div>
-                                <div><label class="text-xs font-bold">Privacy Notice</label><textarea id="setPrivacy" class="w-full border p-2 rounded text-xs" rows="3"></textarea></div>
-                                <div><label class="text-xs font-bold">Terms & Conditions</label><textarea id="setTerms" class="w-full border p-2 rounded text-xs" rows="3"></textarea></div>
-                                <div class="col-span-1 md:col-span-2"><label class="text-xs font-bold">Delivery Grid</label><textarea id="setDelivery" class="w-full border p-2 rounded text-xs" rows="2"></textarea></div>
+                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                                <h3 class="font-bold text-slate-700 mb-4 border-b pb-2"><i class="fa-solid fa-users mr-2"></i>Active Staff</h3>
+                                <div id="staffList" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
+                                    </div>
                             </div>
                         </div>
-                        
-                        <div class="border-t border-slate-200 pt-6">
-                            <h4 class="font-black text-lg mb-4 text-slate-700">Company Details</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><label class="text-xs font-bold">Address</label><textarea id="setAddress" class="w-full border p-2 rounded text-xs" rows="2"></textarea></div>
-                                <div><label class="text-xs font-bold">Phones</label><textarea id="setPhones" class="w-full border p-2 rounded text-xs" rows="2"></textarea></div>
-                            </div>
-                        </div>
-                        
-                        <button type="submit" class="w-full bg-slate-900 text-white font-black py-4 rounded-xl hover:bg-slate-800 transition shadow-xl text-lg"><i class="fa-solid fa-save mr-2"></i> Save All Settings</button>
-                    </form>
+                    </div>
                 </div>
+
             </div>
+        </main>
+    </div>
 
-            <!-- DIRECTORS TAB -->
-            <div id="directorsTab" class="tab-content max-w-5xl mx-auto">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-2xl font-black text-slate-800">Board of Directors</h3>
-                    <button onclick="document.getElementById('dirModal').classList.remove('hidden')" class="bg-teal-600 text-white px-6 py-3 rounded-xl font-black hover:bg-teal-700 shadow-lg transition"><i class="fa-solid fa-plus mr-2"></i> Add Director</button>
-                </div>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-6" id="adminDirGrid"></div>
-            </div>
-
-        </div>
-    </main>
-
-    <!-- Product Modal -->
     <div id="productModal" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm transition-opacity overflow-y-auto">
         <div class="bg-white rounded-3xl p-6 w-full max-w-2xl shadow-2xl relative border-t-4 border-green-500 my-8">
             <button onclick="closeModal('productModal')" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 text-2xl"><i class="fa-solid fa-times"></i></button>
@@ -255,7 +323,6 @@
         </div>
     </div>
 
-    <!-- Banner Modal -->
     <div id="adModal" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm">
         <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl relative border-t-4 border-purple-500">
             <button onclick="closeModal('adModal')" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 text-2xl"><i class="fa-solid fa-times"></i></button>
@@ -268,7 +335,6 @@
         </div>
     </div>
 
-    <!-- Director Modal -->
     <div id="dirModal" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm">
         <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl relative border-t-4 border-teal-500">
             <button onclick="closeModal('dirModal')" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 text-2xl"><i class="fa-solid fa-times"></i></button>
@@ -289,7 +355,7 @@
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(el => { el.classList.remove('active-btn'); el.style.backgroundColor = ''; });
             document.getElementById(tabId).classList.add('active');
-            const titles = { 'ordersTab': 'Live Orders', 'productsTab': 'Inventory', 'adsTab': 'Banners', 'settingsTab': 'Web Settings', 'directorsTab': 'Directors', 'catsTab': 'Categories', 'reportsTab':'POS & Reports' };
+            const titles = { 'ordersTab': 'Live Orders', 'productsTab': 'Inventory', 'adsTab': 'Banners', 'settingsTab': 'Web Settings', 'directorsTab': 'Directors', 'catsTab': 'Categories', 'reportsTab':'POS & Reports', 'staffTab':'Staff Management' };
             document.getElementById('topTitle').innerText = titles[tabId];
         }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
@@ -329,6 +395,9 @@
             lastOrderCount = (JSON.parse(localStorage.getItem('jsuper_orders')) || []).length;
             renderOrders();
             setInterval(pollOrders, 2000);
+
+            // අලුතින් එකතු කරපු Auth Initialize එක
+            initAuth();
         });
 
         function convertImage(input, hiddenId, previewId) {
@@ -684,6 +753,170 @@
         function saveDirector(e) { e.preventDefault(); let list = JSON.parse(localStorage.getItem('jsuper_directors')) || []; list.push({ id: Date.now(), name: document.getElementById('dName').value, role: document.getElementById('dRole').value, img: document.getElementById('dImgB64').value }); localStorage.setItem('jsuper_directors', JSON.stringify(list)); closeModal('dirModal'); loadDirectors(); }
         function delDir(id) { let list = JSON.parse(localStorage.getItem('jsuper_directors')); localStorage.setItem('jsuper_directors', JSON.stringify(list.filter(d => d.id !== id))); loadDirectors(); }
 
+        // ================= AUTHENTICATION & STAFF SYSTEM =================
+        function initAuth() {
+            // 1. Create default Super Admin if not exists
+            let users = JSON.parse(localStorage.getItem('jsuper_users'));
+            if (!users) {
+                users = [{
+                    id: 1,
+                    username: 'admin',
+                    password: '1234',
+                    role: 'Super Admin',
+                    isSuper: true,
+                    permissions: ['orders', 'inventory', 'pos', 'ads'] // Full access
+                }];
+                localStorage.setItem('jsuper_users', JSON.stringify(users));
+            }
+
+            // 2. Check login state
+            const activeUser = JSON.parse(sessionStorage.getItem('jsuper_active_user'));
+            
+            if (activeUser) {
+                // Logged in
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainAdminContent').style.display = 'flex';
+                
+                applyPermissions(activeUser);
+                
+                if(activeUser.isSuper) {
+                    document.getElementById('nav-staff').style.display = 'flex';
+                    loadStaffUsers();
+                }
+            } else {
+                // Not logged in
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('mainAdminContent').style.display = 'none';
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const userVal = document.getElementById('loginUser').value;
+            const passVal = document.getElementById('loginPass').value;
+            const users = JSON.parse(localStorage.getItem('jsuper_users')) || [];
+            
+            const user = users.find(u => u.username === userVal && u.password === passVal);
+            
+            if (user) {
+                sessionStorage.setItem('jsuper_active_user', JSON.stringify(user));
+                window.location.reload(); 
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() {
+            sessionStorage.removeItem('jsuper_active_user');
+            window.location.reload();
+        }
+
+        function applyPermissions(user) {
+            if (user.isSuper) return; // Super admin sees everything
+
+            const sidebarLinks = document.querySelectorAll('aside nav button');
+            
+            sidebarLinks.forEach(link => {
+                const text = link.innerText.toLowerCase();
+                let hasAccess = false;
+
+                if (user.permissions.includes('orders') && text.includes('order')) hasAccess = true;
+                if (user.permissions.includes('inventory') && (text.includes('inventory') || text.includes('categor'))) hasAccess = true;
+                if (user.permissions.includes('pos') && (text.includes('pos') || text.includes('report'))) hasAccess = true;
+                if (user.permissions.includes('ads') && (text.includes('ad') || text.includes('banner'))) hasAccess = true;
+                
+                // Always show these
+                if (text.includes('settings') || text.includes('director')) hasAccess = true; 
+
+                if (!hasAccess && link.id !== 'nav-staff') {
+                    link.style.display = 'none';
+                }
+            });
+        }
+
+        function addStaffUser(e) {
+            e.preventDefault();
+            const username = document.getElementById('staffUsername').value;
+            const pass = document.getElementById('staffPassword').value;
+            const role = document.getElementById('staffRole').value;
+            
+            let permissions = [];
+            if(document.getElementById('permOrders').checked) permissions.push('orders');
+            if(document.getElementById('permInventory').checked) permissions.push('inventory');
+            if(document.getElementById('permPos').checked) permissions.push('pos');
+            if(document.getElementById('permAds').checked) permissions.push('ads');
+
+            let users = JSON.parse(localStorage.getItem('jsuper_users')) || [];
+            
+            if(users.some(u => u.username === username)) {
+                alert("Username already exists!");
+                return;
+            }
+
+            users.push({
+                id: Date.now(),
+                username: username,
+                password: pass,
+                role: role,
+                isSuper: false,
+                permissions: permissions
+            });
+
+            localStorage.setItem('jsuper_users', JSON.stringify(users));
+            alert("User added successfully!");
+            e.target.reset();
+            loadStaffUsers();
+        }
+
+        function loadStaffUsers() {
+            let users = JSON.parse(localStorage.getItem('jsuper_users')) || [];
+            const staffList = document.getElementById('staffList');
+            staffList.innerHTML = '';
+
+            users.forEach(u => {
+                if(u.isSuper) return; 
+                
+                staffList.innerHTML += `
+                    <div class="flex justify-between items-center bg-slate-50 p-3 rounded-lg border">
+                        <div>
+                            <h4 class="font-bold text-sm text-slate-800">${u.username} <span class="text-[10px] bg-teal-100 text-teal-800 px-2 py-0.5 rounded-full ml-2">${u.role}</span></h4>
+                            <p class="text-[10px] text-slate-500 mt-1">Access: ${u.permissions.join(', ') || 'None'}</p>
+                        </div>
+                        <button onclick="deleteStaffUser(${u.id})" class="text-red-500 hover:bg-red-100 p-2 rounded-full transition">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        function deleteStaffUser(id) {
+            if(confirm("Are you sure you want to delete this user?")) {
+                let users = JSON.parse(localStorage.getItem('jsuper_users')) || [];
+                users = users.filter(u => u.id !== id);
+                localStorage.setItem('jsuper_users', JSON.stringify(users));
+                loadStaffUsers();
+            }
+        }
+
+        function changeAdminPassword(e) {
+            e.preventDefault();
+            const newPass = document.getElementById('newAdminPassword').value;
+            let users = JSON.parse(localStorage.getItem('jsuper_users')) || [];
+            
+            let adminIndex = users.findIndex(u => u.isSuper === true);
+            if(adminIndex > -1) {
+                users[adminIndex].password = newPass;
+                localStorage.setItem('jsuper_users', JSON.stringify(users));
+                
+                const activeUser = JSON.parse(sessionStorage.getItem('jsuper_active_user'));
+                activeUser.password = newPass;
+                sessionStorage.setItem('jsuper_active_user', JSON.stringify(activeUser));
+                
+                alert("Super Admin password updated successfully!");
+                e.target.reset();
+            }
+        }
     </script>
 </body>
 </html>
