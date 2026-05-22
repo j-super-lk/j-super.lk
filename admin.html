@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J SUPER.LK - Admin Backend</title>
+    <title>J SUPER.LK - Admin Backend (Firebase)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap" rel="stylesheet">
@@ -18,6 +18,21 @@
         @keyframes blinker { 50% { opacity: 0; } }
         .blink-me { animation: blinker 1s linear infinite; }
     </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCNY4exbPQ37xRC9EdnszLj8wPBtvkdORE",
+            authDomain: "j-super-78993.firebaseapp.com",
+            projectId: "j-super-78993",
+            storageBucket: "j-super-78993.firebasestorage.app",
+            messagingSenderId: "474923446710",
+            appId: "1:474923446710:web:dd243689e1c54fe8d7d117"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+    </script>
 </head>
 <body class="bg-slate-100 text-slate-800 h-screen flex overflow-hidden">
 
@@ -37,7 +52,7 @@
                     <input type="password" id="loginPass" class="w-full border border-slate-300 rounded-lg p-2.5 outline-none focus:border-teal-500" required>
                 </div>
                 <p id="loginError" class="text-red-500 text-xs hidden font-bold">Invalid Username or Password!</p>
-                <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg transition">Login</button>
+                <button type="submit" id="loginBtn" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg transition">Login</button>
             </form>
         </div>
     </div>
@@ -220,7 +235,7 @@
                                 <h4 class="font-black text-lg mb-4 text-slate-700">Payment Setup</h4>
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div><label class="text-xs font-bold">Bank Details</label><textarea id="setBank" class="w-full border p-2 rounded text-xs" rows="3"></textarea></div>
-                                    <div><label class="text-xs font-bold">PayPal Email</label><input type="text" id="setPaypal" class="w-full border p-2 rounded text-xs"></div>
+                                    <div><label class="text-xs font-bold">PayPal Email</label><input type="text" id="setPaypal" class="w-full border p-2 rounded text-xs"></input></div>
                                     <div><label class="text-xs font-bold">Crypto (Binance)</label><textarea id="setCrypto" class="w-full border p-2 rounded text-xs" rows="3"></textarea></div>
                                 </div>
                             </div>
@@ -369,145 +384,247 @@
     </div>
 
     <script>
-        // Utilities
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(el => { el.classList.remove('active-btn'); el.style.backgroundColor = ''; });
-            document.getElementById(tabId).classList.add('active');
-            const titles = { 'ordersTab': 'Live Orders', 'productsTab': 'Inventory', 'adsTab': 'Banners', 'settingsTab': 'Web Settings', 'directorsTab': 'Directors', 'catsTab': 'Categories', 'reportsTab':'POS & Reports', 'staffTab':'Staff Management' };
-            document.getElementById('topTitle').innerText = titles[tabId];
-        }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        // Global variables tied to Firebase data
+        let admin_orders = [];
+        let admin_products = [];
+        let admin_cats = [];
+        let admin_ads = [];
+        let admin_directors = [];
+        let admin_settings = {};
+        let admin_users = [];
+        let orderAudio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg'); 
+        let audioContextEnabled = false; 
+        let lastOrderCount = 0;
 
-        function convertImage(input, hiddenId, previewId, reduceSize=false) {
-            const file = input.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        const MAX = reduceSize ? 1200 : 600; // BG image can be a bit larger
-                        let w = img.width; let h = img.height;
-                        if (w > MAX) { h *= MAX / w; w = MAX; }
-                        canvas.width = w; canvas.height = h;
-                        ctx.drawImage(img, 0, 0, w, h);
-                        const b64 = canvas.toDataURL('image/jpeg', reduceSize ? 0.6 : 0.8);
-                        document.getElementById(hiddenId).value = b64;
-                        if(previewId) {
-                            if(document.getElementById(previewId).tagName === 'IMG') { document.getElementById(previewId).src = b64; } 
-                            else { document.getElementById(previewId).innerHTML = `<img src="${b64}" class="w-full h-full object-cover">`; }
-                        }
-                    };
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        // Init
+        // --- Core Init ---
         document.addEventListener("DOMContentLoaded", () => {
-            initAdminData(); loadProducts(); loadAds(); loadSettings(); loadDirectors(); renderCategoriesTab(); populateReportCategories(); loadSavedSound();
-            lastOrderCount = (JSON.parse(localStorage.getItem('jsuper_orders')) || []).length;
-            renderOrders(); setInterval(pollOrders, 2000); initAuth();
+            loadSavedSound();
+            const activeUser = JSON.parse(sessionStorage.getItem('jsuper_active_user'));
+            if (activeUser) { 
+                document.getElementById('loginScreen').style.display = 'none'; 
+                document.getElementById('mainAdminContent').style.display = 'flex'; 
+                applyPermissions(activeUser); 
+                if(activeUser.isSuper) document.getElementById('nav-staff').style.display = 'flex'; 
+                
+                setupFirebaseListeners();
+            } else { 
+                document.getElementById('loginScreen').style.display = 'flex'; 
+                document.getElementById('mainAdminContent').style.display = 'none'; 
+            }
         });
 
-        function initAdminData() {
-            let prods = JSON.parse(localStorage.getItem('jsuper_products')) || [];
-            let changed = false; let seen = new Set();
-            prods.forEach(p => {
-                let idStr = String(p.id).trim();
-                if(!idStr || idStr === 'undefined' || seen.has(idStr)) { p.id = String(Date.now() + Math.floor(Math.random() * 100000)); changed = true; }
-                seen.add(String(p.id));
+        // --- Firebase Listeners & Migration ---
+        function setupFirebaseListeners() {
+            migrateDataIfEmpty(); // Move localStorage data to Firebase if it's new
+
+            // Orders Listener
+            db.collection("orders").orderBy("timestamp", "desc").onSnapshot(snapshot => {
+                let newOrders = [];
+                snapshot.forEach(doc => newOrders.push({id: doc.id, ...doc.data()}));
+                if (newOrders.length > lastOrderCount && lastOrderCount !== 0 && audioContextEnabled) {
+                    orderAudio.play().catch(e=>{});
+                    const badge = document.getElementById('orderBadge');
+                    badge.classList.add('blink-me'); setTimeout(() => badge.classList.remove('blink-me'), 5000);
+                }
+                lastOrderCount = newOrders.length;
+                admin_orders = newOrders;
+                renderOrders();
             });
-            if(changed) localStorage.setItem('jsuper_products', JSON.stringify(prods));
+
+            // Products Listener
+            db.collection("products").onSnapshot(snapshot => {
+                admin_products = [];
+                snapshot.forEach(doc => admin_products.push({id: doc.id, ...doc.data()}));
+                loadProducts();
+            });
+
+            // System Data Listener (Categories, Settings, Ads, Directors)
+            db.collection("system").doc("data").onSnapshot(doc => {
+                if(doc.exists) {
+                    let d = doc.data();
+                    admin_cats = d.categories || [];
+                    admin_ads = d.ads || [];
+                    admin_directors = d.directors || [];
+                    admin_settings = d.settings || {};
+                    
+                    renderCategoriesTab();
+                    populateReportCategories();
+                    loadAds();
+                    loadDirectors();
+                    loadSettingsToForm();
+                }
+            });
+
+            // Users Listener
+            db.collection("admin_users").onSnapshot(snapshot => {
+                admin_users = [];
+                snapshot.forEach(doc => admin_users.push({id: doc.id, ...doc.data()}));
+                loadStaffUsers();
+            });
         }
 
-        // ================= SETTINGS (UPDATED) =================
-        function loadSettings() {
-            let s = JSON.parse(localStorage.getItem('jsuper_settings')) || {navLinks:'J SUPER PRODUCTS, EXCLUSIVES'};
-            document.getElementById('setWaAdmin').value = s.waAdmin || '94706717695';
-            document.getElementById('setNavLinks').value = s.navLinks || '';
-            document.getElementById('setBank').value = s.bank || '';
-            document.getElementById('setPaypal').value = s.paypal || '';
-            document.getElementById('setCrypto').value = s.crypto || '';
-            document.getElementById('setAbout').value = s.about || '';
-            document.getElementById('setFaq').value = s.faq || '';
-            document.getElementById('setPrivacy').value = s.privacy || '';
-            document.getElementById('setTerms').value = s.terms || '';
-            document.getElementById('setDelivery').value = s.delivery || '';
-            document.getElementById('setAddress').value = s.address || '';
-            document.getElementById('setPhones').value = s.phones || '';
-            // New fields
-            document.getElementById('setFb').value = s.fb || '';
-            document.getElementById('setTiktok').value = s.tiktok || '';
-            document.getElementById('setWa').value = s.wa || '';
-            document.getElementById('setCostPickme').value = s.costPickme || '0';
-            document.getElementById('setCostJsuper').value = s.costJsuper || '0';
-            if(s.bgImage) {
-                document.getElementById('setBgImgBase64').value = s.bgImage;
-                document.getElementById('setBgImgPreview').src = s.bgImage;
-            }
+        function updateSystemData(key, value) {
+            db.collection("system").doc("data").set({ [key]: value }, { merge: true });
+        }
+
+        // --- The Magic Migration Tool ---
+        function migrateDataIfEmpty() {
+            db.collection("products").get().then(snap => {
+                if (snap.empty) {
+                    let localProds = JSON.parse(localStorage.getItem('jsuper_products')) || [];
+                    localProds.forEach(p => db.collection("products").doc(String(p.id)).set(p));
+                }
+            });
+            db.collection("system").doc("data").get().then(doc => {
+                if (!doc.exists) {
+                    let localCats = JSON.parse(localStorage.getItem('jsuper_cats')) || [{ name: 'Vegetables', active: true, subcats: [] }];
+                    let localSettings = JSON.parse(localStorage.getItem('jsuper_settings')) || {navLinks:'J SUPER PRODUCTS'};
+                    let localAds = JSON.parse(localStorage.getItem('jsuper_ads')) || [];
+                    let localDirs = JSON.parse(localStorage.getItem('jsuper_directors')) || [];
+                    db.collection("system").doc("data").set({ categories: localCats, settings: localSettings, ads: localAds, directors: localDirs });
+                }
+            });
+            db.collection("admin_users").get().then(snap => {
+                if (snap.empty) {
+                    let localUsers = JSON.parse(localStorage.getItem('jsuper_users'));
+                    if(localUsers && localUsers.length > 0) {
+                        localUsers.forEach((u, i) => db.collection("admin_users").doc("user_" + i).set(u));
+                    } else {
+                        db.collection("admin_users").doc("admin_1").set({ username: 'admin', password: '1234', role: 'Super Admin', isSuper: true, permissions: ['orders', 'inventory', 'pos', 'ads'] });
+                    }
+                }
+            });
+        }
+
+        // --- Auth & Users ---
+        function handleLogin(e) { 
+            e.preventDefault(); 
+            document.getElementById('loginBtn').innerText = "Checking...";
+            const userVal = document.getElementById('loginUser').value; 
+            const passVal = document.getElementById('loginPass').value; 
+            
+            db.collection("admin_users").get().then(snap => {
+                if(snap.empty) {
+                    // Bypass if Firebase is totally new
+                    if(userVal === 'admin' && passVal === '1234') {
+                        let defaultUser = { id: 'admin_1', username: 'admin', role: 'Super Admin', isSuper: true, permissions: ['orders', 'inventory', 'pos', 'ads'] };
+                        sessionStorage.setItem('jsuper_active_user', JSON.stringify(defaultUser)); 
+                        window.location.reload();
+                    } else {
+                        document.getElementById('loginError').classList.remove('hidden');
+                        document.getElementById('loginBtn').innerText = "Login";
+                    }
+                } else {
+                    let found = false;
+                    snap.forEach(doc => {
+                        let u = doc.data();
+                        if(u.username === userVal && u.password === passVal) {
+                            found = true; u.id = doc.id;
+                            sessionStorage.setItem('jsuper_active_user', JSON.stringify(u)); 
+                            window.location.reload();
+                        }
+                    });
+                    if(!found) {
+                        document.getElementById('loginError').classList.remove('hidden');
+                        document.getElementById('loginBtn').innerText = "Login";
+                    }
+                }
+            }).catch(e => {
+                console.log(e); document.getElementById('loginBtn').innerText = "Login";
+            });
+        }
+        function handleLogout() { sessionStorage.removeItem('jsuper_active_user'); window.location.reload(); }
+        function applyPermissions(user) { if (user.isSuper) return; const sidebarLinks = document.querySelectorAll('aside nav button'); sidebarLinks.forEach(link => { const text = link.innerText.toLowerCase(); let hasAccess = false; if (user.permissions.includes('orders') && text.includes('order')) hasAccess = true; if (user.permissions.includes('inventory') && (text.includes('inventory') || text.includes('categor'))) hasAccess = true; if (user.permissions.includes('pos') && (text.includes('pos') || text.includes('report'))) hasAccess = true; if (user.permissions.includes('ads') && (text.includes('ad') || text.includes('banner'))) hasAccess = true; if (text.includes('settings') || text.includes('director')) hasAccess = true; if (!hasAccess && link.id !== 'nav-staff') { link.style.display = 'none'; } }); }
+        
+        function addStaffUser(e) { 
+            e.preventDefault(); 
+            const username = document.getElementById('staffUsername').value; 
+            const pass = document.getElementById('staffPassword').value; 
+            const role = document.getElementById('staffRole').value; 
+            let permissions = []; 
+            if(document.getElementById('permOrders').checked) permissions.push('orders'); 
+            if(document.getElementById('permInventory').checked) permissions.push('inventory'); 
+            if(document.getElementById('permPos').checked) permissions.push('pos'); 
+            if(document.getElementById('permAds').checked) permissions.push('ads'); 
+            
+            if(admin_users.some(u => u.username === username)) { alert("Username already exists!"); return; } 
+            db.collection("admin_users").doc("user_" + Date.now()).set({ username: username, password: pass, role: role, isSuper: false, permissions: permissions }).then(() => { alert("User added successfully!"); e.target.reset(); }); 
+        }
+        function loadStaffUsers() { const staffList = document.getElementById('staffList'); staffList.innerHTML = ''; admin_users.forEach(u => { if(u.isSuper) return; staffList.innerHTML += `<div class="flex justify-between items-center bg-slate-50 p-3 rounded-lg border"><div><h4 class="font-bold text-sm text-slate-800">${u.username} <span class="text-[10px] bg-teal-100 text-teal-800 px-2 py-0.5 rounded-full ml-2">${u.role}</span></h4><p class="text-[10px] text-slate-500 mt-1">Access: ${u.permissions.join(', ') || 'None'}</p></div><button onclick="deleteStaffUser('${u.id}')" class="text-red-500 hover:bg-red-100 p-2 rounded-full transition"><i class="fa-solid fa-trash"></i></button></div>`; }); }
+        function deleteStaffUser(id) { if(confirm("Are you sure you want to delete this user?")) { db.collection("admin_users").doc(String(id)).delete(); } }
+        function changeAdminPassword(e) { e.preventDefault(); const newPass = document.getElementById('newAdminPassword').value; let adminUser = admin_users.find(u => u.isSuper === true); if(adminUser) { db.collection("admin_users").doc(adminUser.id).update({password: newPass}).then(() => { const activeUser = JSON.parse(sessionStorage.getItem('jsuper_active_user')); activeUser.password = newPass; sessionStorage.setItem('jsuper_active_user', JSON.stringify(activeUser)); alert("Super Admin password updated successfully!"); e.target.reset(); }); } }
+
+        // --- UI Utils ---
+        function switchTab(tabId) { document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => { el.classList.remove('active-btn'); el.style.backgroundColor = ''; }); document.getElementById(tabId).classList.add('active'); const titles = { 'ordersTab': 'Live Orders', 'productsTab': 'Inventory', 'adsTab': 'Banners', 'settingsTab': 'Web Settings', 'directorsTab': 'Directors', 'catsTab': 'Categories', 'reportsTab':'POS & Reports', 'staffTab':'Staff Management' }; document.getElementById('topTitle').innerText = titles[tabId]; }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function convertImage(input, hiddenId, previewId, reduceSize=false) { const file = input.files[0]; if (file) { const reader = new FileReader(); reader.onload = e => { const img = new Image(); img.onload = () => { const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); const MAX = reduceSize ? 1200 : 600; let w = img.width; let h = img.height; if (w > MAX) { h *= MAX / w; w = MAX; } canvas.width = w; canvas.height = h; ctx.drawImage(img, 0, 0, w, h); const b64 = canvas.toDataURL('image/jpeg', reduceSize ? 0.6 : 0.8); document.getElementById(hiddenId).value = b64; if(previewId) { if(document.getElementById(previewId).tagName === 'IMG') { document.getElementById(previewId).src = b64; } else { document.getElementById(previewId).innerHTML = `<img src="${b64}" class="w-full h-full object-cover">`; } } }; img.src = e.target.result; }; reader.readAsDataURL(file); } }
+        function enableAudioContext() { orderAudio.play().then(() => { orderAudio.pause(); orderAudio.currentTime = 0; audioContextEnabled = true; document.getElementById('enableSoundBtn').className = "bg-green-100 text-green-700 px-4 py-2 rounded-lg text-xs font-bold border border-green-200"; document.getElementById('enableSoundBtn').innerHTML = '<i class="fa-solid fa-check mr-1"></i> Sound ON'; }).catch(e => console.log(e)); }
+        function changeNotifSound(input) { const file = input.files[0]; if(file) { const reader = new FileReader(); reader.onload = e => { localStorage.setItem('jsuper_sound', e.target.result); orderAudio = new Audio(e.target.result); alert("Sound Updated"); }; reader.readAsDataURL(file); } }
+        function loadSavedSound() { const saved = localStorage.getItem('jsuper_sound'); if(saved) orderAudio = new Audio(saved); }
+
+        // --- Orders ---
+        function renderOrders() {
+            document.getElementById('orderBadge').innerText = admin_orders.length; if(admin_orders.length > 0) document.getElementById('orderBadge').classList.remove('hidden'); else document.getElementById('orderBadge').classList.add('hidden');
+            const container = document.getElementById('ordersContainer');
+            if(admin_orders.length === 0) { container.innerHTML = '<div class="p-8 text-center text-slate-400 font-bold">No orders yet.</div>'; return; }
+            container.innerHTML = admin_orders.map(o => {
+                let itemsHtml = o.items.map(i => `<div class="text-[10px] text-slate-600 truncate border-b border-slate-100 last:border-0 pb-1 mb-1">- ${i.name} (${i.qty})</div>`).join('');
+                let proofBtn = o.paymentProof ? `<a href="${o.paymentProof}" download="Proof_${o.id}" class="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded ml-2 font-bold"><i class="fa-solid fa-download"></i> Slip</a>` : '';
+                let delText = o.deliveryType ? ` | Delivery: <strong>${o.deliveryType.toUpperCase()} (Rs.${o.deliveryCost||0})</strong>` : '';
+                let dStr = o.date; try { dStr = new Date(o.date).toLocaleString(); } catch(e){}
+                return `<div class="p-4 hover:bg-slate-50 transition border-b flex flex-col md:flex-row justify-between gap-4"><div class="flex-1"><div class="flex items-center gap-2 mb-2"><span class="bg-green-600 text-white text-[10px] font-black px-2 py-0.5 rounded">${o.id}</span><span class="text-[10px] text-slate-500">${dStr}</span><span class="text-[10px] bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-black uppercase">${o.paymentMethod}</span>${proofBtn}</div><h4 class="font-black text-sm"><i class="fa-solid fa-user text-slate-400 mr-2"></i>${o.customer.name}</h4><p class="text-xs text-slate-600"><i class="fa-solid fa-phone text-slate-400 mr-2"></i>${o.customer.phone} | <i class="fa-solid fa-map-pin text-slate-400 mx-1"></i>${o.customer.address||'Pickup'} ${delText}</p><div class="bg-slate-100 p-2 rounded mt-2 max-h-24 overflow-y-auto">${itemsHtml}</div></div><div class="text-right flex flex-col justify-between"><div><select onchange="updateOrderStatus('${o.id}', this.value)" class="text-xs font-black p-1 border rounded focus:outline-none focus:border-green-500 mb-2"><option value="Pending" ${o.status==='Pending'?'selected':''}>Pending</option><option value="Processing" ${o.status==='Processing'?'selected':''}>Processing</option><option value="Shipped" ${o.status==='Shipped'?'selected':''}>Shipped</option><option value="Delivered" ${o.status==='Delivered'?'selected':''}>Delivered</option><option value="Cancelled" ${o.status==='Cancelled'?'selected':''}>Cancelled</option></select><div class="font-black text-green-700 text-lg">Rs. ${parseFloat(o.total).toFixed(2)}</div></div><button onclick="delOrder('${o.id}')" class="text-red-500 text-[10px] hover:underline mt-2">Delete</button></div></div>`;
+            }).join('');
+        }
+        function updateOrderStatus(id, status) { db.collection("orders").doc(id).update({status: status}); }
+        function delOrder(id) { if(confirm("Delete this order?")) { db.collection("orders").doc(id).delete(); } }
+        function clearOrders() { if(confirm("Clear all orders?")) { admin_orders.forEach(o => db.collection("orders").doc(o.id).delete()); } }
+
+        // --- Settings ---
+        function loadSettingsToForm() {
+            let s = admin_settings;
+            document.getElementById('setWaAdmin').value = s.waAdmin || ''; document.getElementById('setNavLinks').value = s.navLinks || '';
+            document.getElementById('setBank').value = s.bank || ''; document.getElementById('setPaypal').value = s.paypal || ''; document.getElementById('setCrypto').value = s.crypto || '';
+            document.getElementById('setAbout').value = s.about || ''; document.getElementById('setFaq').value = s.faq || ''; document.getElementById('setPrivacy').value = s.privacy || ''; document.getElementById('setTerms').value = s.terms || ''; document.getElementById('setDelivery').value = s.delivery || '';
+            document.getElementById('setAddress').value = s.address || ''; document.getElementById('setPhones').value = s.phones || '';
+            document.getElementById('setFb').value = s.fb || ''; document.getElementById('setTiktok').value = s.tiktok || ''; document.getElementById('setWa').value = s.wa || '';
+            document.getElementById('setCostPickme').value = s.costPickme || '0'; document.getElementById('setCostJsuper').value = s.costJsuper || '0';
+            if(s.bgImage) { document.getElementById('setBgImgBase64').value = s.bgImage; document.getElementById('setBgImgPreview').src = s.bgImage; }
         }
         function saveWebSettings(e) {
             e.preventDefault();
-            let s = {
-                waAdmin: document.getElementById('setWaAdmin').value,
-                navLinks: document.getElementById('setNavLinks').value,
-                bank: document.getElementById('setBank').value,
-                paypal: document.getElementById('setPaypal').value,
-                crypto: document.getElementById('setCrypto').value,
-                about: document.getElementById('setAbout').value,
-                faq: document.getElementById('setFaq').value,
-                privacy: document.getElementById('setPrivacy').value,
-                terms: document.getElementById('setTerms').value,
-                delivery: document.getElementById('setDelivery').value,
-                address: document.getElementById('setAddress').value,
-                phones: document.getElementById('setPhones').value,
-                // New Fields
-                fb: document.getElementById('setFb').value,
-                tiktok: document.getElementById('setTiktok').value,
-                wa: document.getElementById('setWa').value,
-                costPickme: document.getElementById('setCostPickme').value,
-                costJsuper: document.getElementById('setCostJsuper').value,
-                bgImage: document.getElementById('setBgImgBase64').value
-            };
-            localStorage.setItem('jsuper_settings', JSON.stringify(s));
-            alert("Settings Saved Successfully!");
+            let s = { waAdmin: document.getElementById('setWaAdmin').value, navLinks: document.getElementById('setNavLinks').value, bank: document.getElementById('setBank').value, paypal: document.getElementById('setPaypal').value, crypto: document.getElementById('setCrypto').value, about: document.getElementById('setAbout').value, faq: document.getElementById('setFaq').value, privacy: document.getElementById('setPrivacy').value, terms: document.getElementById('setTerms').value, delivery: document.getElementById('setDelivery').value, address: document.getElementById('setAddress').value, phones: document.getElementById('setPhones').value, fb: document.getElementById('setFb').value, tiktok: document.getElementById('setTiktok').value, wa: document.getElementById('setWa').value, costPickme: document.getElementById('setCostPickme').value, costJsuper: document.getElementById('setCostJsuper').value, bgImage: document.getElementById('setBgImgBase64').value };
+            updateSystemData('settings', s); alert("Settings Saved to Database Successfully!");
         }
 
-        // ================= CATEGORIES & INVENTORY & OTHERS =================
+        // --- Categories ---
         function renderCategoriesTab() {
-            let cats = JSON.parse(localStorage.getItem('jsuper_cats')) || [];
             let html = '';
-            cats.forEach((c, idx) => {
+            admin_cats.forEach((c, idx) => {
                 let subHtml = (c.subcats||[]).map(s => `<span class="bg-slate-200 text-slate-700 px-2 py-1 rounded text-[10px] m-1 inline-flex items-center gap-1">${s} <button onclick="delSubcat(${idx}, '${s}')" class="text-red-500"><i class="fa-solid fa-times"></i></button></span>`).join('');
                 html += `<div class="border p-4 rounded-xl flex justify-between items-center bg-slate-50 mb-3"><div><h4 class="font-black text-sm">${c.name} ${c.active===false ? '<span class="text-red-500 text-[10px]">Inactive</span>' : '<span class="text-green-500 text-[10px]">Active</span>'}</h4><div class="mt-1">${subHtml}</div></div><div class="flex flex-col gap-1 md:flex-row"><button onclick="toggleCat(${idx})" class="text-[10px] px-2 py-1 border rounded font-bold bg-white hover:bg-slate-100">Toggle Status</button><button onclick="addSubcat(${idx})" class="text-[10px] px-2 py-1 border rounded font-bold bg-blue-50 text-blue-700 hover:bg-blue-100">+ Subcat</button><button onclick="delCat(${idx})" class="text-[10px] px-2 py-1 border rounded font-bold bg-red-50 text-red-600"><i class="fa-solid fa-trash"></i></button></div></div>`;
             });
             document.getElementById('adminCatList').innerHTML = html;
         }
-        function addCategory() { let n = prompt("Category Name:"); if(n) { let cats = JSON.parse(localStorage.getItem('jsuper_cats')) || []; cats.push({name:n, active:true, subcats:[]}); localStorage.setItem('jsuper_cats', JSON.stringify(cats)); renderCategoriesTab(); } }
-        function delCat(idx) { if(confirm("Delete category?")) { let cats = JSON.parse(localStorage.getItem('jsuper_cats')); cats.splice(idx, 1); localStorage.setItem('jsuper_cats', JSON.stringify(cats)); renderCategoriesTab(); } }
-        function toggleCat(idx) { let cats = JSON.parse(localStorage.getItem('jsuper_cats')); cats[idx].active = cats[idx].active === false ? true : false; localStorage.setItem('jsuper_cats', JSON.stringify(cats)); renderCategoriesTab(); }
-        function addSubcat(idx) { let n = prompt("Sub-category Name:"); if(n) { let cats = JSON.parse(localStorage.getItem('jsuper_cats')); if(!cats[idx].subcats) cats[idx].subcats = []; cats[idx].subcats.push(n); localStorage.setItem('jsuper_cats', JSON.stringify(cats)); renderCategoriesTab(); } }
-        function delSubcat(idx, s) { let cats = JSON.parse(localStorage.getItem('jsuper_cats')); cats[idx].subcats = cats[idx].subcats.filter(x => x !== s); localStorage.setItem('jsuper_cats', JSON.stringify(cats)); renderCategoriesTab(); }
-        function updateSubcatDropdown() { let cats = JSON.parse(localStorage.getItem('jsuper_cats')) || []; let catName = document.getElementById('pCat').value; let c = cats.find(x => x.name === catName); let sub = document.getElementById('pSubcat'); if(c && c.subcats && c.subcats.length > 0) { sub.innerHTML = '<option value="">No Subcategory</option>' + c.subcats.map(s => `<option value="${s}">${s}</option>`).join(''); sub.classList.remove('hidden'); } else { sub.innerHTML = '<option value="">No Subcategory</option>'; sub.classList.add('hidden'); } }
+        function addCategory() { let n = prompt("Category Name:"); if(n) { admin_cats.push({name:n, active:true, subcats:[]}); updateSystemData('categories', admin_cats); } }
+        function delCat(idx) { if(confirm("Delete category?")) { admin_cats.splice(idx, 1); updateSystemData('categories', admin_cats); } }
+        function toggleCat(idx) { admin_cats[idx].active = !admin_cats[idx].active; updateSystemData('categories', admin_cats); }
+        function addSubcat(idx) { let n = prompt("Sub-category Name:"); if(n) { if(!admin_cats[idx].subcats) admin_cats[idx].subcats = []; admin_cats[idx].subcats.push(n); updateSystemData('categories', admin_cats); } }
+        function delSubcat(idx, s) { admin_cats[idx].subcats = admin_cats[idx].subcats.filter(x => x !== s); updateSystemData('categories', admin_cats); }
+        function updateSubcatDropdown() { let catName = document.getElementById('pCat').value; let c = admin_cats.find(x => x.name === catName); let sub = document.getElementById('pSubcat'); if(c && c.subcats && c.subcats.length > 0) { sub.innerHTML = '<option value="">No Subcategory</option>' + c.subcats.map(s => `<option value="${s}">${s}</option>`).join(''); sub.classList.remove('hidden'); } else { sub.innerHTML = '<option value="">No Subcategory</option>'; sub.classList.add('hidden'); } }
 
+        // --- Products ---
         function loadProducts() {
-            const prods = JSON.parse(localStorage.getItem('jsuper_products')) || [];
-            document.getElementById('prodCount').innerText = prods.length;
+            document.getElementById('prodCount').innerText = admin_products.length;
             const tbody = document.getElementById('adminProductTable'); tbody.innerHTML = '';
-            prods.forEach(p => {
+            admin_products.forEach(p => {
                 let discInfo = p.discType!=='none' && p.discVal>0 ? `<br><span class="text-red-500 text-[10px]">Disc: ${p.discVal}${p.discType==='percent'?'%':'Rs'}</span>` : '';
                 tbody.innerHTML += `<tr class="border-b"><td class="p-4"><img src="${p.img||''}" class="w-10 h-10 object-cover rounded"></td><td class="p-4"><div class="font-bold text-sm">${p.name}</div><div class="text-[10px] text-slate-500 w-32 truncate">${p.desc}</div></td><td class="p-4 text-xs"><span class="bg-slate-100 px-2 py-1 rounded">${p.category}</span><br><span class="text-[9px]">${p.subcategory||''}</span></td><td class="p-4 text-xs">${p.isWeight==='true'?'Kg/g':'Unit'}</td><td class="p-4 font-bold text-green-700">Rs. ${parseFloat(p.price).toFixed(2)}${discInfo}</td><td class="p-4 text-right"><button onclick="openProductModal('${p.id}')" class="text-blue-500 hover:bg-blue-50 p-2 rounded mr-1"><i class="fa-solid fa-edit"></i></button><button onclick="delProduct('${p.id}')" class="text-red-500 hover:bg-red-50 p-2 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`;
             });
         }
         function openProductModal(id = null) {
-            let cats = JSON.parse(localStorage.getItem('jsuper_cats')) || [];
-            document.getElementById('pCat').innerHTML = cats.filter(c=>c.active!==false).map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
+            document.getElementById('pCat').innerHTML = admin_cats.filter(c=>c.active!==false).map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
             if(id) {
-                let list = JSON.parse(localStorage.getItem('jsuper_products')) || []; let p = list.find(x => String(x.id).trim() === String(id).trim());
+                let p = admin_products.find(x => String(x.id).trim() === String(id).trim());
                 if(p) { document.getElementById('pId').value = p.id; document.getElementById('pName').value = p.name; document.getElementById('pWeight').value = p.isWeight; document.getElementById('pCat').value = p.category; updateSubcatDropdown(); document.getElementById('pSubcat').value = p.subcategory || ''; document.getElementById('pPrice').value = p.price; document.getElementById('pDiscType').value = p.discType || 'none'; document.getElementById('pDiscVal').value = p.discVal || 0; document.getElementById('pDesc').value = p.desc; document.getElementById('pImgB64').value = p.img || ''; document.getElementById('pImgPreviewBox').innerHTML = p.img ? `<img src="${p.img}" class="w-full h-full object-cover">` : '<i class="fa-solid fa-image text-slate-300"></i>'; }
             } else {
                 document.getElementById('pId').value = ''; document.getElementById('pName').value = ''; document.getElementById('pPrice').value = ''; document.getElementById('pDesc').value = ''; document.getElementById('pDiscVal').value = '0'; document.getElementById('pImgB64').value = ''; document.getElementById('pImgPreviewBox').innerHTML = '<i class="fa-solid fa-image text-slate-300"></i>'; updateSubcatDropdown();
@@ -515,84 +632,26 @@
             document.getElementById('productModal').classList.remove('hidden');
         }
         function saveProduct(e) {
-            e.preventDefault(); let list = JSON.parse(localStorage.getItem('jsuper_products')) || []; let id = document.getElementById('pId').value;
-            let obj = { id: id ? String(id).trim() : String(Date.now()), name: document.getElementById('pName').value, category: document.getElementById('pCat').value, subcategory: document.getElementById('pSubcat').value, price: document.getElementById('pPrice').value, isWeight: document.getElementById('pWeight').value, desc: document.getElementById('pDesc').value, discType: document.getElementById('pDiscType').value, discVal: document.getElementById('pDiscVal').value, img: document.getElementById('pImgB64').value };
-            if(id) { list = list.map(x => String(x.id).trim() === String(id).trim() ? obj : x); } else { list.unshift(obj); }
-            localStorage.setItem('jsuper_products', JSON.stringify(list)); closeModal('productModal'); loadProducts();
+            e.preventDefault(); let id = document.getElementById('pId').value; let pId = id ? String(id).trim() : String(Date.now());
+            let obj = { id: pId, name: document.getElementById('pName').value, category: document.getElementById('pCat').value, subcategory: document.getElementById('pSubcat').value, price: document.getElementById('pPrice').value, isWeight: document.getElementById('pWeight').value, desc: document.getElementById('pDesc').value, discType: document.getElementById('pDiscType').value, discVal: document.getElementById('pDiscVal').value, img: document.getElementById('pImgB64').value };
+            let btn = document.getElementById('productModal').querySelector('button[type="submit"]'); btn.innerText = "Saving...";
+            db.collection("products").doc(pId).set(obj).then(() => { closeModal('productModal'); btn.innerText = "Save Product"; });
         }
-        function delProduct(id) { if(confirm("Delete product?")) { let list = JSON.parse(localStorage.getItem('jsuper_products')); localStorage.setItem('jsuper_products', JSON.stringify(list.filter(p => String(p.id).trim() !== String(id).trim()))); loadProducts(); } }
+        function delProduct(id) { if(confirm("Delete product?")) { db.collection("products").doc(String(id).trim()).delete(); } }
 
-        // Orders
-        let orderAudio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg'); let audioContextEnabled = false; let lastOrderCount = 0;
-        function enableAudioContext() { orderAudio.play().then(() => { orderAudio.pause(); orderAudio.currentTime = 0; audioContextEnabled = true; document.getElementById('enableSoundBtn').className = "bg-green-100 text-green-700 px-4 py-2 rounded-lg text-xs font-bold border border-green-200"; document.getElementById('enableSoundBtn').innerHTML = '<i class="fa-solid fa-check mr-1"></i> Sound ON'; }).catch(e => console.log(e)); }
-        function changeNotifSound(input) { const file = input.files[0]; if(file) { const reader = new FileReader(); reader.onload = e => { localStorage.setItem('jsuper_sound', e.target.result); orderAudio = new Audio(e.target.result); alert("Sound Updated"); }; reader.readAsDataURL(file); } }
-        function loadSavedSound() { const saved = localStorage.getItem('jsuper_sound'); if(saved) orderAudio = new Audio(saved); }
-        function renderOrders() {
-            const orders = JSON.parse(localStorage.getItem('jsuper_orders')) || [];
-            document.getElementById('orderBadge').innerText = orders.length; if(orders.length > 0) document.getElementById('orderBadge').classList.remove('hidden'); else document.getElementById('orderBadge').classList.add('hidden');
-            const container = document.getElementById('ordersContainer');
-            if(orders.length === 0) { container.innerHTML = '<div class="p-8 text-center text-slate-400 font-bold">No orders yet.</div>'; return; }
-            container.innerHTML = orders.map(o => {
-                let itemsHtml = o.items.map(i => `<div class="text-[10px] text-slate-600 truncate border-b border-slate-100 last:border-0 pb-1 mb-1">- ${i.name} (${i.qty})</div>`).join('');
-                let proofBtn = o.paymentProof ? `<a href="${o.paymentProof}" download="Proof_${o.id}" class="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded ml-2 font-bold"><i class="fa-solid fa-download"></i> Slip</a>` : '';
-                
-                // NEW: Show delivery info in admin orders
-                let delText = o.deliveryType ? ` | Delivery: <strong>${o.deliveryType.toUpperCase()} (Rs.${o.deliveryCost||0})</strong>` : '';
+        // --- Ads & Directors ---
+        function loadAds() { document.getElementById('adsGrid').innerHTML = admin_ads.map(a => `<div class="relative rounded-xl overflow-hidden shadow border"><img src="${a.img}" class="w-full h-32 object-cover"><button onclick="delAd(${a.id})" class="absolute top-2 right-2 bg-red-600 text-white w-8 h-8 rounded-full shadow-lg"><i class="fa-solid fa-trash"></i></button></div>`).join(''); }
+        function saveAd(e) { e.preventDefault(); admin_ads.push({ id: Date.now(), img: document.getElementById('adImgB64').value }); updateSystemData('ads', admin_ads); closeModal('adModal'); }
+        function delAd(id) { admin_ads = admin_ads.filter(a => a.id !== id); updateSystemData('ads', admin_ads); }
+        
+        function loadDirectors() { document.getElementById('adminDirGrid').innerHTML = admin_directors.map(d => `<div class="bg-white p-4 rounded-xl text-center shadow-sm border relative"><img src="${d.img}" class="w-16 h-16 rounded-full mx-auto object-cover mb-2 border"><h5 class="font-black text-sm">${d.name}</h5><p class="text-[10px] text-teal-600 font-bold">${d.role}</p><button onclick="delDir(${d.id})" class="absolute top-2 right-2 text-red-500"><i class="fa-solid fa-trash"></i></button></div>`).join(''); }
+        function saveDirector(e) { e.preventDefault(); admin_directors.push({ id: Date.now(), name: document.getElementById('dName').value, role: document.getElementById('dRole').value, img: document.getElementById('dImgB64').value }); updateSystemData('directors', admin_directors); closeModal('dirModal'); }
+        function delDir(id) { admin_directors = admin_directors.filter(d => d.id !== id); updateSystemData('directors', admin_directors); }
 
-                return `<div class="p-4 hover:bg-slate-50 transition border-b flex flex-col md:flex-row justify-between gap-4"><div class="flex-1"><div class="flex items-center gap-2 mb-2"><span class="bg-green-600 text-white text-[10px] font-black px-2 py-0.5 rounded">${o.id}</span><span class="text-[10px] text-slate-500">${o.date}</span><span class="text-[10px] bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-black uppercase">${o.paymentMethod}</span>${proofBtn}</div><h4 class="font-black text-sm"><i class="fa-solid fa-user text-slate-400 mr-2"></i>${o.customer.name}</h4><p class="text-xs text-slate-600"><i class="fa-solid fa-phone text-slate-400 mr-2"></i>${o.customer.phone} | <i class="fa-solid fa-map-pin text-slate-400 mx-1"></i>${o.customer.address||'Pickup'} ${delText}</p><div class="bg-slate-100 p-2 rounded mt-2 max-h-24 overflow-y-auto">${itemsHtml}</div></div><div class="text-right flex flex-col justify-between"><div><select onchange="updateOrderStatus('${o.id}', this.value)" class="text-xs font-black p-1 border rounded focus:outline-none focus:border-green-500 mb-2"><option value="Pending" ${o.status==='Pending'?'selected':''}>Pending</option><option value="Processing" ${o.status==='Processing'?'selected':''}>Processing</option><option value="Shipped" ${o.status==='Shipped'?'selected':''}>Shipped</option><option value="Delivered" ${o.status==='Delivered'?'selected':''}>Delivered</option><option value="Cancelled" ${o.status==='Cancelled'?'selected':''}>Cancelled</option></select><div class="font-black text-green-700 text-lg">Rs. ${parseFloat(o.total).toFixed(2)}</div></div><button onclick="delOrder('${o.id}')" class="text-red-500 text-[10px] hover:underline mt-2">Delete</button></div></div>`;
-            }).join('');
-        }
-        function updateOrderStatus(id, status) { let orders = JSON.parse(localStorage.getItem('jsuper_orders')) || []; orders = orders.map(o => { if(String(o.id) === String(id)) o.status = status; return o; }); localStorage.setItem('jsuper_orders', JSON.stringify(orders)); }
-        function delOrder(id) { if(confirm("Delete this order?")) { let orders = JSON.parse(localStorage.getItem('jsuper_orders')); localStorage.setItem('jsuper_orders', JSON.stringify(orders.filter(o => String(o.id) !== String(id)))); renderOrders(); } }
-        function clearOrders() { if(confirm("Clear all orders?")) { localStorage.setItem('jsuper_orders', '[]'); lastOrderCount = 0; renderOrders(); } }
-        function pollOrders() { const orders = JSON.parse(localStorage.getItem('jsuper_orders')) || []; if(orders.length > lastOrderCount) { if(lastOrderCount !== 0 && audioContextEnabled) { orderAudio.play().catch(e=>{}); const badge = document.getElementById('orderBadge'); badge.classList.add('blink-me'); setTimeout(() => badge.classList.remove('blink-me'), 5000); } lastOrderCount = orders.length; renderOrders(); } else if (orders.length < lastOrderCount) { lastOrderCount = orders.length; renderOrders(); } }
-
-        // Reports
-        function generateSalesReport() { const start = document.getElementById('repStart').value; const end = document.getElementById('repEnd').value; const orders = JSON.parse(localStorage.getItem('jsuper_orders')) || []; let filtered = orders; if(start && end) { const sDate = new Date(start); const eDate = new Date(end); eDate.setHours(23, 59, 59); filtered = orders.filter(o => { const od = new Date(o.date); return od >= sDate && od <= eDate; }); } let totalSales = filtered.filter(o => o.status !== 'Cancelled').reduce((sum, o) => sum + o.total, 0); document.getElementById('salesReportResult').innerHTML = `<div class="text-center"><p class="text-xs text-slate-500 font-bold uppercase mb-1">Total Sales</p><h2 class="text-3xl font-black text-green-700 mb-2">Rs. ${totalSales.toFixed(2)}</h2><p class="text-sm font-bold text-slate-700">Valid Orders: ${filtered.filter(o=>o.status!=='Cancelled').length}</p></div>`; }
-        function populateReportCategories() { let cats = JSON.parse(localStorage.getItem('jsuper_cats')) || []; document.getElementById('repInvCat').innerHTML = '<option value="all">All Categories</option>' + cats.map(c => `<option value="${c.name}">${c.name}</option>`).join(''); }
-        function generateInventoryReport() { const cat = document.getElementById('repInvCat').value; const inv = JSON.parse(localStorage.getItem('jsuper_products')) || []; let filtered = cat === 'all' ? inv : inv.filter(i => i.category === cat); let html = '<table class="w-full text-left text-xs"><tr class="border-b"><th class="pb-2">Item</th><th class="pb-2 text-right">Price</th></tr>'; filtered.forEach(i => { html += `<tr class="border-b border-slate-100 last:border-0"><td class="py-2">${i.name}</td><td class="py-2 text-right text-green-700 font-bold">Rs. ${parseFloat(i.price).toFixed(2)}</td></tr>`; }); html += '</table>'; document.getElementById('invReportResult').innerHTML = html; }
-
-        // Ads & Directors
-        function loadAds() { const ads = JSON.parse(localStorage.getItem('jsuper_ads')) || []; document.getElementById('adsGrid').innerHTML = ads.map(a => `<div class="relative rounded-xl overflow-hidden shadow border"><img src="${a.img}" class="w-full h-32 object-cover"><button onclick="delAd(${a.id})" class="absolute top-2 right-2 bg-red-600 text-white w-8 h-8 rounded-full shadow-lg"><i class="fa-solid fa-trash"></i></button></div>`).join(''); }
-        function saveAd(e) { e.preventDefault(); let list = JSON.parse(localStorage.getItem('jsuper_ads')) || []; list.push({ id: Date.now(), img: document.getElementById('adImgB64').value }); localStorage.setItem('jsuper_ads', JSON.stringify(list)); closeModal('adModal'); loadAds(); }
-        function delAd(id) { let list = JSON.parse(localStorage.getItem('jsuper_ads')); localStorage.setItem('jsuper_ads', JSON.stringify(list.filter(a => a.id !== id))); loadAds(); }
-        function loadDirectors() { const dirs = JSON.parse(localStorage.getItem('jsuper_directors')) || []; document.getElementById('adminDirGrid').innerHTML = dirs.map(d => `<div class="bg-white p-4 rounded-xl text-center shadow-sm border relative"><img src="${d.img}" class="w-16 h-16 rounded-full mx-auto object-cover mb-2 border"><h5 class="font-black text-sm">${d.name}</h5><p class="text-[10px] text-teal-600 font-bold">${d.role}</p><button onclick="delDir(${d.id})" class="absolute top-2 right-2 text-red-500"><i class="fa-solid fa-trash"></i></button></div>`).join(''); }
-        function saveDirector(e) { e.preventDefault(); let list = JSON.parse(localStorage.getItem('jsuper_directors')) || []; list.push({ id: Date.now(), name: document.getElementById('dName').value, role: document.getElementById('dRole').value, img: document.getElementById('dImgB64').value }); localStorage.setItem('jsuper_directors', JSON.stringify(list)); closeModal('dirModal'); loadDirectors(); }
-        function delDir(id) { let list = JSON.parse(localStorage.getItem('jsuper_directors')); localStorage.setItem('jsuper_directors', JSON.stringify(list.filter(d => d.id !== id))); loadDirectors(); }
-
-        // Auth
-        function initAuth() {
-            let users = JSON.parse(localStorage.getItem('jsuper_users'));
-            if (!users) { users = [{ id: 1, username: 'admin', password: '1234', role: 'Super Admin', isSuper: true, permissions: ['orders', 'inventory', 'pos', 'ads'] }]; localStorage.setItem('jsuper_users', JSON.stringify(users)); }
-            const activeUser = JSON.parse(sessionStorage.getItem('jsuper_active_user'));
-            if (activeUser) { document.getElementById('loginScreen').style.display = 'none'; document.getElementById('mainAdminContent').style.display = 'flex'; applyPermissions(activeUser); if(activeUser.isSuper) { document.getElementById('nav-staff').style.display = 'flex'; loadStaffUsers(); } } else { document.getElementById('loginScreen').style.display = 'flex'; document.getElementById('mainAdminContent').style.display = 'none'; }
-        }
-        function handleLogin(e) { e.preventDefault(); const userVal = document.getElementById('loginUser').value; const passVal = document.getElementById('loginPass').value; const users = JSON.parse(localStorage.getItem('jsuper_users')) || []; const user = users.find(u => u.username === userVal && u.password === passVal); if (user) { sessionStorage.setItem('jsuper_active_user', JSON.stringify(user)); window.location.reload(); } else { document.getElementById('loginError').classList.remove('hidden'); } }
-        function handleLogout() { sessionStorage.removeItem('jsuper_active_user'); window.location.reload(); }
-        function applyPermissions(user) { if (user.isSuper) return; const sidebarLinks = document.querySelectorAll('aside nav button'); sidebarLinks.forEach(link => { const text = link.innerText.toLowerCase(); let hasAccess = false; if (user.permissions.includes('orders') && text.includes('order')) hasAccess = true; if (user.permissions.includes('inventory') && (text.includes('inventory') || text.includes('categor'))) hasAccess = true; if (user.permissions.includes('pos') && (text.includes('pos') || text.includes('report'))) hasAccess = true; if (user.permissions.includes('ads') && (text.includes('ad') || text.includes('banner'))) hasAccess = true; if (text.includes('settings') || text.includes('director')) hasAccess = true; if (!hasAccess && link.id !== 'nav-staff') { link.style.display = 'none'; } }); }
-        function addStaffUser(e) { e.preventDefault(); const username = document.getElementById('staffUsername').value; const pass = document.getElementById('staffPassword').value; const role = document.getElementById('staffRole').value; let permissions = []; if(document.getElementById('permOrders').checked) permissions.push('orders'); if(document.getElementById('permInventory').checked) permissions.push('inventory'); if(document.getElementById('permPos').checked) permissions.push('pos'); if(document.getElementById('permAds').checked) permissions.push('ads'); let users = JSON.parse(localStorage.getItem('jsuper_users')) || []; if(users.some(u => u.username === username)) { alert("Username already exists!"); return; } users.push({ id: Date.now(), username: username, password: pass, role: role, isSuper: false, permissions: permissions }); localStorage.setItem('jsuper_users', JSON.stringify(users)); alert("User added successfully!"); e.target.reset(); loadStaffUsers(); }
-        function loadStaffUsers() { let users = JSON.parse(localStorage.getItem('jsuper_users')) || []; const staffList = document.getElementById('staffList'); staffList.innerHTML = ''; users.forEach(u => { if(u.isSuper) return; staffList.innerHTML += `<div class="flex justify-between items-center bg-slate-50 p-3 rounded-lg border"><div><h4 class="font-bold text-sm text-slate-800">${u.username} <span class="text-[10px] bg-teal-100 text-teal-800 px-2 py-0.5 rounded-full ml-2">${u.role}</span></h4><p class="text-[10px] text-slate-500 mt-1">Access: ${u.permissions.join(', ') || 'None'}</p></div><button onclick="deleteStaffUser(${u.id})" class="text-red-500 hover:bg-red-100 p-2 rounded-full transition"><i class="fa-solid fa-trash"></i></button></div>`; }); }
-        function deleteStaffUser(id) { if(confirm("Are you sure you want to delete this user?")) { let users = JSON.parse(localStorage.getItem('jsuper_users')) || []; users = users.filter(u => u.id !== id); localStorage.setItem('jsuper_users', JSON.stringify(users)); loadStaffUsers(); } }
-        function changeAdminPassword(e) { e.preventDefault(); const newPass = document.getElementById('newAdminPassword').value; let users = JSON.parse(localStorage.getItem('jsuper_users')) || []; let adminIndex = users.findIndex(u => u.isSuper === true); if(adminIndex > -1) { users[adminIndex].password = newPass; localStorage.setItem('jsuper_users', JSON.stringify(users)); const activeUser = JSON.parse(sessionStorage.getItem('jsuper_active_user')); activeUser.password = newPass; sessionStorage.setItem('jsuper_active_user', JSON.stringify(activeUser)); alert("Super Admin password updated successfully!"); e.target.reset(); } }
+        // --- Reports ---
+        function generateSalesReport() { const start = document.getElementById('repStart').value; const end = document.getElementById('repEnd').value; let filtered = admin_orders; if(start && end) { const sDate = new Date(start); const eDate = new Date(end); eDate.setHours(23, 59, 59); filtered = admin_orders.filter(o => { const od = new Date(o.date); return od >= sDate && od <= eDate; }); } let totalSales = filtered.filter(o => o.status !== 'Cancelled').reduce((sum, o) => sum + o.total, 0); document.getElementById('salesReportResult').innerHTML = `<div class="text-center"><p class="text-xs text-slate-500 font-bold uppercase mb-1">Total Sales</p><h2 class="text-3xl font-black text-green-700 mb-2">Rs. ${totalSales.toFixed(2)}</h2><p class="text-sm font-bold text-slate-700">Valid Orders: ${filtered.filter(o=>o.status!=='Cancelled').length}</p></div>`; }
+        function populateReportCategories() { document.getElementById('repInvCat').innerHTML = '<option value="all">All Categories</option>' + admin_cats.map(c => `<option value="${c.name}">${c.name}</option>`).join(''); }
+        function generateInventoryReport() { const cat = document.getElementById('repInvCat').value; let filtered = cat === 'all' ? admin_products : admin_products.filter(i => i.category === cat); let html = '<table class="w-full text-left text-xs"><tr class="border-b"><th class="pb-2">Item</th><th class="pb-2 text-right">Price</th></tr>'; filtered.forEach(i => { html += `<tr class="border-b border-slate-100 last:border-0"><td class="py-2">${i.name}</td><td class="py-2 text-right text-green-700 font-bold">Rs. ${parseFloat(i.price).toFixed(2)}</td></tr>`; }); html += '</table>'; document.getElementById('invReportResult').innerHTML = html; }
     </script>
 </body>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
-<script>
-  // ඔයාගේ Firebase කෝඩ් එක
-  const firebaseConfig = {
-    apiKey: "AIzaSyCNY4exbPQ37xRC9EdnszLj8wPBtvkdORE",
-    authDomain: "j-super-78993.firebaseapp.com",
-    projectId: "j-super-78993",
-    storageBucket: "j-super-78993.firebasestorage.app",
-    messagingSenderId: "474923446710",
-    appId: "1:474923446710:web:dd243689e1c54fe8d7d117"
-  };
-
-  // Firebase සහ Database එක Start කිරීම
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  console.log("Database Connected Successfully! 🎉");
-</script>
 </html>
