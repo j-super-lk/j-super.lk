@@ -17,7 +17,6 @@
         .hide-scroll::-webkit-scrollbar { display: none; }
         .modal-active { display: flex !important; animation: fadeIn 0.3s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
-        /* Keells style primary green */
         .bg-brand { background-color: #16a34a; }
         .text-brand { color: #16a34a; }
         .border-brand { border-color: #16a34a; }
@@ -239,6 +238,23 @@
         </div>
     </footer>
 
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCNY4exbPQ37xRC9EdnszLj8wPBtvkdORE",
+            authDomain: "j-super-78993.firebaseapp.com",
+            projectId: "j-super-78993",
+            storageBucket: "j-super-78993.firebasestorage.app",
+            messagingSenderId: "474923446710",
+            appId: "1:474923446710:web:dd243689e1c54fe8d7d117"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        console.log("Database Connected Successfully! 🎉");
+    </script>
+
     <script>
         document.getElementById('year').innerText = new Date().getFullYear();
 
@@ -249,7 +265,6 @@
         let settings = {};
         let subtotalAmt = 0;
 
-        // CORE DATA INITIALIZATION & SANITIZATION
         function initData() {
             let prods = JSON.parse(localStorage.getItem('jsuper_products')) || [];
             let uniqueProds = []; let seen = new Set(); let changed = false;
@@ -269,21 +284,12 @@
             customer = JSON.parse(localStorage.getItem('jsuper_customer')) || null;
             
             settings = JSON.parse(localStorage.getItem('jsuper_settings')) || {};
-            // Default Drone shot of Sri Lanka
             const defaultBg = "https://images.unsplash.com/photo-1588668214407-6ea9a6d8c272?auto=format&fit=crop&q=80&w=1920";
             document.getElementById('site-bg').style.backgroundImage = `url('${settings.bgImage || defaultBg}')`;
         }
 
         document.addEventListener("DOMContentLoaded", () => {
-            initData();
-            renderNav();
-            renderAds();
-            renderCategories();
-            renderProducts();
-            renderFooter();
-            renderDirectors();
-            updateCartUI();
-            checkCustomerState();
+            initData(); renderNav(); renderAds(); renderCategories(); renderProducts(); renderFooter(); renderDirectors(); updateCartUI(); checkCustomerState();
             
             document.getElementById('paymentProofFile').addEventListener('change', function(e) {
                 const file = e.target.files[0];
@@ -295,7 +301,6 @@
             });
         });
 
-        // ================= UI RENDERING =================
         function renderNav() {
             const topNav = document.getElementById('topDynamicNav');
             const links = (settings.navLinks||'').split(',').map(l => l.trim()).filter(l => l);
@@ -314,8 +319,7 @@
             noAds.style.display = 'none';
             track.innerHTML = ads.map(ad => `<img src="${ad.img}" class="w-full h-full object-cover flex-shrink-0" style="min-width: 100%;">`).join('');
             if(ads.length > 1) {
-                let idx = 0;
-                setInterval(() => { idx = (idx + 1) % ads.length; track.style.transform = `translateX(-${idx * 100}%)`; }, 4000);
+                let idx = 0; setInterval(() => { idx = (idx + 1) % ads.length; track.style.transform = `translateX(-${idx * 100}%)`; }, 4000);
             }
         }
 
@@ -326,23 +330,17 @@
             
             let allBtnClass = !activeCategory ? 'text-brand border-b-2 border-brand font-bold' : 'hover:text-brand border-b-2 border-transparent';
             let desktopHtml = `<button onclick="resetFilters()" class="pb-2 whitespace-nowrap transition-colors ${allBtnClass}">All Categories</button>`;
-            
             let allBtnMobClass = !activeCategory ? 'bg-gray-800 text-white' : 'bg-white border border-gray-200 text-gray-700';
             let mobileHtml = `<button onclick="resetFilters()" class="px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap ${allBtnMobClass}">All</button>`;
             
             cats.filter(c => c.active !== false).forEach(c => {
                 let isAct = activeCategory === c.name;
-                
                 let deskCls = isAct ? 'text-brand border-b-2 border-brand font-bold' : 'hover:text-brand border-b-2 border-transparent';
                 desktopHtml += `<button onclick="filterCategory('${c.name}')" class="pb-2 whitespace-nowrap transition-colors ${deskCls}">${c.name}</button>`;
-                
                 let mobCls = isAct ? 'bg-gray-800 text-white' : 'bg-white border border-gray-200 text-gray-700';
                 mobileHtml += `<button onclick="filterCategory('${c.name}')" class="px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap ${mobCls}">${c.name}</button>`;
             });
-            
-            desktopNav.innerHTML = desktopHtml;
-            mobileRow.innerHTML = mobileHtml;
-            renderSubcategories();
+            desktopNav.innerHTML = desktopHtml; mobileRow.innerHTML = mobileHtml; renderSubcategories();
         }
         
         function renderSubcategories() {
@@ -357,9 +355,7 @@
                     return `<button onclick="filterSubcategory('${s}')" class="px-3 py-1 rounded border text-xs font-medium whitespace-nowrap ${cls}">${s}</button>`;
                 }).join('');
                 subRow.classList.remove('hidden');
-            } else {
-                subRow.classList.add('hidden');
-            }
+            } else { subRow.classList.add('hidden'); }
         }
 
         function filterCategory(name) { activeCategory = name; activeSubcategory = null; renderCategories(); renderProducts(); }
@@ -369,13 +365,10 @@
 
         function renderProducts(searchQuery = null) {
             let prods = JSON.parse(localStorage.getItem('jsuper_products')) || [];
-            
             let promos = prods.filter(p => p.discType && p.discType !== 'none');
             const promoRow = document.getElementById('promoRow');
             const promoSec = document.getElementById('promoSection');
-            if(promos.length > 0) {
-                promoSec.classList.remove('hidden');
-                promoRow.innerHTML = promos.map(p => generateProductCardHTML(p, true)).join('');
+            if(promos.length > 0) { promoSec.classList.remove('hidden'); promoRow.innerHTML = promos.map(p => generateProductCardHTML(p, true)).join('');
             } else { promoSec.classList.add('hidden'); }
 
             let filtered = prods;
@@ -387,8 +380,7 @@
                 if(activeSubcategory) filtered = filtered.filter(p => p.subcategory === activeSubcategory);
                 document.getElementById('productSectionTitle').innerHTML = activeSubcategory ? `${activeSubcategory}` : activeCategory;
             } else {
-                filtered = prods.slice(0, 15);
-                document.getElementById('productSectionTitle').innerHTML = "All Products";
+                filtered = prods.slice(0, 15); document.getElementById('productSectionTitle').innerHTML = "All Products";
             }
             
             const grid = document.getElementById('productGrid');
@@ -442,7 +434,6 @@
             `;
         }
 
-        // ================= CART & CHECKOUT =================
         function toggleCart() {
             const drawer = document.getElementById('cartDrawer'); const overlay = document.getElementById('cartOverlay');
             if(drawer.classList.contains('translate-x-full')) { drawer.classList.remove('translate-x-full'); overlay.classList.remove('hidden'); overlay.classList.add('block'); } 
@@ -471,8 +462,7 @@
 
         function updateCartUI() {
             document.getElementById('cartCountBadge').innerText = cart.length;
-            const list = document.getElementById('cartItemsList');
-            subtotalAmt = 0;
+            const list = document.getElementById('cartItemsList'); subtotalAmt = 0;
             if (cart.length === 0) {
                 list.innerHTML = '<div class="text-center text-gray-400 py-20"><i class="fa-solid fa-cart-shopping text-4xl mb-3 text-gray-300"></i><p class="font-medium text-sm">Your cart is empty</p></div>';
                 document.getElementById('cartTotal').innerText = 'Rs. 0.00'; document.getElementById('cartTotalHeader').innerText = 'Rs. 0.00'; return;
@@ -481,21 +471,16 @@
             let html = '';
             cart.forEach(i => {
                 let pPrice = parseFloat(i.calcPrice !== undefined ? i.calcPrice : i.price) || 0;
-                let q = parseFloat(i.qty) || 1;
-                let itemTotal = q * pPrice;
-                subtotalAmt += itemTotal;
-                let isW = (i.isWeight === 'true' || i.isWeight === true);
-                let unit = isW ? 'Kg' : 'Unit'; let step = isW ? 0.1 : 1; let minVal = isW ? 0.1 : 1;
+                let q = parseFloat(i.qty) || 1; let itemTotal = q * pPrice; subtotalAmt += itemTotal;
+                let isW = (i.isWeight === 'true' || i.isWeight === true); let unit = isW ? 'Kg' : 'Unit'; let step = isW ? 0.1 : 1; let minVal = isW ? 0.1 : 1;
                 
                 html += `<div class="flex gap-3 bg-white p-3 rounded-lg border border-gray-200 mb-3 shadow-sm relative group"><button onclick="removeFromCart('${i.id}')" class="absolute -top-2 -right-2 bg-white border border-gray-200 text-gray-400 hover:text-red-500 rounded-full w-6 h-6 flex items-center justify-center transition-colors text-[10px] shadow-sm"><i class="fa-solid fa-times"></i></button><div class="w-16 h-16 bg-white border border-gray-100 rounded p-1 flex-shrink-0"><img src="${i.img || 'https://via.placeholder.com/50'}" class="w-full h-full object-contain mix-blend-multiply"></div><div class="flex-1 flex flex-col justify-between"><div><h4 class="font-medium text-sm text-gray-800 leading-tight mb-1 line-clamp-2">${i.name}</h4><div class="text-[10px] text-gray-500">Rs.${pPrice.toFixed(2)} / ${unit}</div></div><div class="font-bold text-gray-900 text-sm mt-1">Rs.${itemTotal.toFixed(2)}</div></div><div class="flex flex-col items-center justify-between bg-gray-50 rounded border border-gray-200 w-8"><button onclick="updateCartQty('${i.id}', ${step}, ${minVal})" class="text-gray-500 hover:text-brand w-full py-1 transition-colors"><i class="fa-solid fa-plus text-[10px]"></i></button><span class="font-bold text-xs py-1">${q}</span><button onclick="updateCartQty('${i.id}', -${step}, 0)" class="text-gray-500 hover:text-red-500 w-full py-1 transition-colors"><i class="fa-solid fa-minus text-[10px]"></i></button></div></div>`;
             });
             list.innerHTML = html;
-            document.getElementById('cartTotal').innerText = `Rs. ${subtotalAmt.toFixed(2)}`;
-            document.getElementById('cartTotalHeader').innerText = `Rs. ${subtotalAmt.toFixed(2)}`;
-            updateCheckoutTotal(); // Update modal if open
+            document.getElementById('cartTotal').innerText = `Rs. ${subtotalAmt.toFixed(2)}`; document.getElementById('cartTotalHeader').innerText = `Rs. ${subtotalAmt.toFixed(2)}`;
+            updateCheckoutTotal();
         }
 
-        // ================= AUTH & CHECKOUT LOGIC =================
         function checkCustomerState() {
             const link = document.getElementById('authLink');
             if(customer) { link.innerHTML = `<i class="fa-solid fa-user-check text-brand"></i> <span class="text-gray-200">Hi, ${customer.name.split(' ')[0]}</span>`; document.getElementById('custName').value = customer.name; document.getElementById('custPhone').value = customer.phone; document.getElementById('custAddress').value = customer.address; } 
@@ -513,7 +498,6 @@
                 document.getElementById('paymentSection').classList.remove('hidden'); 
                 document.getElementById('checkoutTotalBox').classList.remove('hidden');
                 
-                // Populate Delivery Options
                 const cPickme = parseFloat(settings.costPickme) || 0;
                 const cJsuper = parseFloat(settings.costJsuper) || 0;
                 document.getElementById('checkoutDelivery').innerHTML = `
@@ -521,12 +505,9 @@
                     <option value="pickme" data-cost="${cPickme}">PickMe Flash (Rs. ${cPickme.toFixed(2)})</option>
                     <option value="jsuper" data-cost="${cJsuper}">J Super Delivery (Rs. ${cJsuper.toFixed(2)})</option>
                 `;
-                togglePaymentProof();
-                updateCheckoutTotal();
+                togglePaymentProof(); updateCheckoutTotal();
             } else { 
-                document.getElementById('paymentSection').classList.add('hidden'); 
-                document.getElementById('checkoutTotalBox').classList.add('hidden');
-                toggleCart(); 
+                document.getElementById('paymentSection').classList.add('hidden'); document.getElementById('checkoutTotalBox').classList.add('hidden'); toggleCart(); 
             }
         }
         function closeAuthModal() { document.getElementById('authModal').classList.remove('modal-active'); }
@@ -565,6 +546,9 @@
 
         function proceedToCheckout() { if(cart.length === 0) { alert("Your cart is empty!"); return; } openAuthModal(true); }
 
+        // ==========================================
+        //  FIREBASE ORDER SAVING (UPDATED CODE)
+        // ==========================================
         function finalizeOrder() {
             if(!customer) return;
             const delSelect = document.getElementById('checkoutDelivery');
@@ -574,14 +558,20 @@
             const finalTotal = subtotalAmt + delCost;
             const orderId = 'ORD-' + Math.floor(Math.random() * 1000000);
             
+            // Database එකට යවන්න ලෑස්ති කරන අලුත් Order Object එක
             const newOrder = {
-                id: orderId, date: new Date().toLocaleString(), customer: customer, items: cart,
-                total: finalTotal, status: 'Pending', paymentMethod: document.getElementById('checkoutPayment').value,
-                deliveryType: delType, deliveryCost: delCost, paymentProof: document.getElementById('paymentProofB64').value
+                id: orderId, 
+                date: new Date().toISOString(), 
+                customer: customer, 
+                items: cart,
+                total: finalTotal, 
+                status: 'Pending', 
+                paymentMethod: document.getElementById('checkoutPayment').value,
+                deliveryType: delType, 
+                deliveryCost: delCost, 
+                paymentProof: document.getElementById('paymentProofB64').value || "",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp() // වෙලාව
             };
-            
-            const orders = JSON.parse(localStorage.getItem('jsuper_orders')) || [];
-            orders.unshift(newOrder); localStorage.setItem('jsuper_orders', JSON.stringify(orders));
 
             let msg = `*NEW ORDER - ${newOrder.id}* %0A-----------------------%0A*Customer:* ${customer.name}%0A*Phone:* ${customer.phone}%0A*Address:* ${customer.address || 'Pickup'}%0A*Delivery:* ${delType}%0A*Payment:* ${newOrder.paymentMethod.toUpperCase()}%0A-----------------------%0A*ITEMS:*%0A`;
             cart.forEach(i => {
@@ -591,13 +581,45 @@
             });
             msg += `-----------------------%0A*Subtotal: Rs. ${subtotalAmt.toFixed(2)}*%0A*Delivery: Rs. ${delCost.toFixed(2)}*%0A*TOTAL: Rs. ${finalTotal.toFixed(2)}*%0A-----------------------`;
 
-            cart = []; localStorage.setItem('jsuper_cart', '[]'); updateCartUI(); closeAuthModal(); toggleCart();
-            
-            document.getElementById('successMsgText').innerText = `Order ID: ${orderId}`;
-            document.getElementById('successModal').classList.add('modal-active');
-            
-            const adminPhone = settings.waAdmin ? settings.waAdmin.replace(/[^0-9]/g, '') : "94706717695";
-            setTimeout(() => { document.getElementById('successModal').classList.remove('modal-active'); window.open(`https://wa.me/${adminPhone}?text=${msg}`, '_blank'); }, 2000);
+            // Loading බව පෙන්නන්න බට්න් එක වෙනස් කිරීම
+            document.getElementById('authBtnText').innerText = "Processing Order...";
+            document.getElementById('authBtnText').disabled = true;
+
+            // 1. Firebase එකට Save කිරීම!
+            db.collection("orders").doc(orderId).set(newOrder)
+            .then(() => {
+                console.log("Order saved to Firebase!");
+                
+                // Track කරන්න ලේසි වෙන්න ෆෝන් එකෙත් සේව් කරමු
+                const orders = JSON.parse(localStorage.getItem('jsuper_orders')) || [];
+                orders.unshift(newOrder); localStorage.setItem('jsuper_orders', JSON.stringify(orders));
+
+                // Cart එක හිස් කිරීම
+                cart = []; localStorage.setItem('jsuper_cart', '[]'); updateCartUI(); closeAuthModal(); toggleCart();
+                
+                // Button එක යථා තත්වයට පත් කිරීම
+                document.getElementById('authBtnText').innerText = "Confirm Order";
+                document.getElementById('authBtnText').disabled = false;
+                
+                // Success Modal එක පෙන්නීම
+                document.getElementById('successMsgText').innerText = `Order ID: ${orderId}`;
+                document.getElementById('successModal').classList.add('modal-active');
+                
+                // WhatsApp එකට යැවීම
+                const adminPhone = settings.waAdmin ? settings.waAdmin.replace(/[^0-9]/g, '') : "94706717695";
+                setTimeout(() => { 
+                    document.getElementById('successModal').classList.remove('modal-active'); 
+                    window.open(`https://wa.me/${adminPhone}?text=${msg}`, '_blank'); 
+                }, 2000);
+
+            })
+            .catch((error) => {
+                // සේව් වෙද්දී දෝෂයක් ආවොත්
+                console.error("Error saving order: ", error);
+                alert("සමාවෙන්න, ඕඩර් එක යැවීමේදී දෝෂයක් මතු වුණා. කරුණාකර නැවත උත්සාහ කරන්න.");
+                document.getElementById('authBtnText').innerText = "Confirm Order";
+                document.getElementById('authBtnText').disabled = false;
+            });
         }
         
         function checkOrderStatus() {
@@ -621,7 +643,6 @@
         }
 
         function renderFooter() {
-            // Footer Text Columns
             document.getElementById('footerColumns').innerHTML = `
                 <div>
                     <img src="logo.png" class="h-10 object-contain mb-4 filter brightness-0 invert opacity-60" onerror="this.style.display='none'">
@@ -637,8 +658,6 @@
                     </ul>
                 </div>
             `;
-
-            // Social Media Links
             let socialHtml = '';
             if(settings.fb) socialHtml += `<a href="${settings.fb}" target="_blank" class="hover:text-white transition-colors"><i class="fa-brands fa-facebook"></i></a>`;
             if(settings.tiktok) socialHtml += `<a href="${settings.tiktok}" target="_blank" class="hover:text-white transition-colors"><i class="fa-brands fa-tiktok"></i></a>`;
@@ -654,23 +673,4 @@
         }
     </script>
 </body>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
-<script>
-  // ඔයාගේ Firebase කෝඩ් එක
-  const firebaseConfig = {
-    apiKey: "AIzaSyCNY4exbPQ37xRC9EdnszLj8wPBtvkdORE",
-    authDomain: "j-super-78993.firebaseapp.com",
-    projectId: "j-super-78993",
-    storageBucket: "j-super-78993.firebasestorage.app",
-    messagingSenderId: "474923446710",
-    appId: "1:474923446710:web:dd243689e1c54fe8d7d117"
-  };
-
-  // Firebase සහ Database එක Start කිරීම
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  console.log("Database Connected Successfully! 🎉");
-</script>
 </html>
